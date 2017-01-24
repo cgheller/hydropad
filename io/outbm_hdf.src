@@ -1,0 +1,212 @@
+#include "hydrompi.def"
+!
+SUBROUTINE outbm_hdf
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+	USE io_mod
+!
+! local variables
+!
+	IMPLICIT NONE
+
+!	include 'dffunc.inc'
+!       include 'hdf.inc'
+
+	CHARACTER*1  :: ch1,ch2,ch3
+	CHARACTER*30, ALLOCATABLE, DIMENSION(:) :: filename1,sds_name
+        INTEGER :: i,j,k
+	INTEGER :: id1,id2,id3,id4,id5,id6
+	INTEGER :: rec,ii,nrec,ibut
+	INTEGER :: iunit1,iunit2,iunit3,iunit4,iunit5,iunit6
+	INTEGER :: nnout
+	REAL*8  :: taux
+	REAL(kind=4), ALLOCATABLE, DIMENSION(:,:,:) :: data_aux
+	integer :: DFACC,DFN_TYPE,RANK,SD_UNLIMITED
+	integer :: sds_index
+        integer :: dim_sizes(3)
+        integer :: start(3)
+        integer :: stride(3)
+        integer :: edges(3)
+        integer :: sfstart,sfendacc,sfend,sfselect,sfwdata,sfcreate,sfsnatt,sfscatt
+!
+	noutput=noutput+1
+	nnout=4
+	allocate(data_aux(nx,ny,nz))
+	data_aux=0.0
+	allocate(filename1(nnout))
+	allocate(sds_name(nnout))
+!
+        call getindex(noutput,ch1,ch2,ch3)
+	filename1(1)='bmdens.'//ch1//ch2//ch3//'.hdf'
+	filename1(2)='bmtemp.'//ch1//ch2//ch3//'.hdf'
+	filename1(3)='dmdens.'//ch1//ch2//ch3//'.hdf'
+	filename1(4)='bmv.'//ch1//ch2//ch3//'.hdf'
+	sds_name(1)='BM density'
+	sds_name(2)='BM temperature'
+	sds_name(3)='DM density'
+	sds_name(4)='BM velocity'
+!
+	RANK=3
+	DFACC=4
+	DFN_TYPE=5
+	SD_UNLIMITED=0
+!
+        dim_sizes(1)=nx
+        dim_sizes(2)=ny
+        dim_sizes(3)=npes*nz
+!
+	start(1)=0
+	start(2)=0
+	start(3)=mype*nz
+	stride(1)=1
+	stride(2)=1
+        stride(3)=1
+	edges(1)=nx
+	edges(2)=ny
+	edges(3)=nz
+
+	if(mype.eq.0)then
+	 do i=1,nnout
+	  id1=sfstart(filename1(i),DFACC)
+!	  if(i.eq.4)dim_sizes(3)=SD_UNLIMITED
+	  if(i.eq.4)dim_sizes(3)=3*dim_sizes(3)
+	  id2=sfcreate(id1,sds_name(i),DFN_TYPE,RANK,dim_sizes)
+	  id3=sfendacc(id2)
+	  id4=sfend(id1)
+ 	 enddo
+	endif
+!
+	DFACC=2
+!
+	do ii=0,npes-1
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+	if(mype.eq.ii)then
+!
+! write BM density
+!
+	  id1=sfstart(filename1(1),DFACC)
+	  sds_index=0
+	  id2=sfselect(id1,sds_index)
+!
+	  data_aux=real(rho3d)
+	  id3=sfwdata(id2,start,stride,edges,data_aux)
+	  if(mype.eq.0)then
+	    id4=sfscatt(id2,'a1',4,60,cosmological_model)
+	    id4=sfscatt(id2,'a2',4,60,owner)
+	    id4=sfsnatt(id2,'a3',24,1,date_of_production)
+	    id4=sfsnatt(id2,'a4',24,1,s_id)
+	    id4=sfsnatt(id2,'a5',24,1,ntot)
+	    id4=sfsnatt(id2,'a6',6,1,redshiftold)
+	    id4=sfsnatt(id2,'a7',6,1,box)
+	    id4=sfsnatt(id2,'a8',6,1,omega_tot)
+	    id4=sfsnatt(id2,'a9',6,1,omega_bm)
+	    id4=sfsnatt(id2,'a10',6,1,omega_dm)
+	    id4=sfsnatt(id2,'a11',6,1,omega_lambda)
+	    id4=sfsnatt(id2,'a12',6,1,hnow)
+	  endif
+!
+	  id4=sfendacc(id2)
+	  id5=sfend(id1)
+!
+! write BM temperature
+!
+          id1=sfstart(filename1(2),DFACC)
+          sds_index=0
+          id2=sfselect(id1,sds_index)
+!
+	  data_aux=real(ttt)
+          id3=sfwdata(id2,start,stride,edges,data_aux)
+	  if(mype.eq.0)then
+	    id4=sfscatt(id2,'a1',4,60,cosmological_model)
+	    id4=sfscatt(id2,'a2',4,60,owner)
+	    id4=sfsnatt(id2,'a3',24,1,date_of_production)
+	    id4=sfsnatt(id2,'a4',24,1,s_id)
+	    id4=sfsnatt(id2,'a5',24,1,ntot)
+	    id4=sfsnatt(id2,'a6',6,1,redshiftold)
+	    id4=sfsnatt(id2,'a7',6,1,box)
+	    id4=sfsnatt(id2,'a8',6,1,omega_tot)
+	    id4=sfsnatt(id2,'a9',6,1,omega_bm)
+	    id4=sfsnatt(id2,'a10',6,1,omega_dm)
+	    id4=sfsnatt(id2,'a11',6,1,omega_lambda)
+	    id4=sfsnatt(id2,'a12',6,1,hnow)
+	  endif
+!
+          id4=sfendacc(id2)
+          id5=sfend(id1)
+!
+! write DM density
+!
+          id1=sfstart(filename1(3),DFACC)
+          sds_index=0
+          id2=sfselect(id1,sds_index)
+!
+          data_aux=real(rhodm3d)
+          id3=sfwdata(id2,start,stride,edges,data_aux)
+	  if(mype.eq.0)then
+	    id4=sfscatt(id2,'a1',4,60,cosmological_model)
+	    id4=sfscatt(id2,'a2',4,60,owner)
+	    id4=sfsnatt(id2,'a3',24,1,date_of_production)
+	    id4=sfsnatt(id2,'a4',24,1,s_id)
+	    id4=sfsnatt(id2,'a5',24,1,ntot)
+	    id4=sfsnatt(id2,'a6',6,1,redshiftold)
+	    id4=sfsnatt(id2,'a7',6,1,box)
+	    id4=sfsnatt(id2,'a8',6,1,omega_tot)
+	    id4=sfsnatt(id2,'a9',6,1,omega_bm)
+	    id4=sfsnatt(id2,'a10',6,1,omega_dm)
+	    id4=sfsnatt(id2,'a11',6,1,omega_lambda)
+	    id4=sfsnatt(id2,'a12',6,1,hnow)
+	  endif
+!
+          id4=sfendacc(id2)
+          id5=sfend(id1)
+!
+! write BM velocity
+!
+          id1=sfstart(filename1(4),DFACC)
+          sds_index=0
+          id2=sfselect(id1,sds_index)
+!
+	  data_aux=real(vnor*vx3d)
+          id3=sfwdata(id2,start,stride,edges,data_aux)
+	  start(3)=start(3)+nz*npes
+	  data_aux=real(vnor*vy3d)
+          id4=sfwdata(id2,start,stride,edges,data_aux)
+	  start(3)=start(3)+nz*npes
+	  data_aux=real(vnor*vz3d)
+          id5=sfwdata(id2,start,stride,edges,data_aux)
+	  if(mype.eq.0)then
+	    id4=sfscatt(id2,'a1',4,60,cosmological_model)
+	    id4=sfscatt(id2,'a2',4,60,owner)
+	    id4=sfsnatt(id2,'a3',24,1,date_of_production)
+	    id4=sfsnatt(id2,'a4',24,1,s_id)
+	    id4=sfsnatt(id2,'a5',24,1,ntot)
+	    id4=sfsnatt(id2,'a6',6,1,redshiftold)
+	    id4=sfsnatt(id2,'a7',6,1,box)
+	    id4=sfsnatt(id2,'a8',6,1,omega_tot)
+	    id4=sfsnatt(id2,'a9',6,1,omega_bm)
+	    id4=sfsnatt(id2,'a10',6,1,omega_dm)
+	    id4=sfsnatt(id2,'a11',6,1,omega_lambda)
+	    id4=sfsnatt(id2,'a12',6,1,hnow)
+	  endif
+!
+          id4=sfendacc(id2)
+          id5=sfend(id1)
+!
+	endif
+	enddo
+!
+	deallocate(data_aux)
+	data_aux=0.0
+	deallocate(filename1)
+!
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+END SUBROUTINE outbm_hdf

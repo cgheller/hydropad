@@ -1,0 +1,187 @@
+#include "hydrompi.def"
+
+SUBROUTINE shsearch
+!
+! search for strongly compressing regions (possible shocks)
+! 
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+!
+! local variables
+!
+	IMPLICIT NONE
+!
+#ifdef USEMPI
+        INTEGER :: status_array(MPI_STATUS_SIZE,4)
+#endif
+        INTEGER :: req(4)
+	INTEGER :: indexm,indexp,nslice
+	INTEGER :: to_pe,from_pe
+        INTEGER :: i,j,k
+	REAL*8  :: pgradx,vgradx,pgrady,vgrady,pgradz,vgradz,vgrad,pgrad
+	REAL*8, DIMENSION (:,:), ALLOCATABLE :: vz_aux
+	REAL*8, DIMENSION (:,:), ALLOCATABLE :: p_aux
+!
+	allocate (vz_aux(nx,ny))
+	allocate (p_aux(nx,ny))
+	nslice=nx*ny
+#ifdef USEMPI
+	from_pe=mype-1
+        if(from_pe.lt.0)from_pe=npes-1
+	to_pe=mype+1
+	if(to_pe.gt.npes-1)to_pe=0
+	CALL MPI_Irecv(vz_aux(1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       from_pe,30,MPI_COMM_WORLD,req(1),ierr)
+	CALL MPI_Irecv(p_aux(1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       from_pe,40,MPI_COMM_WORLD,req(2),ierr)
+	CALL MPI_Isend(vz3d(1,1,nz),nslice,MPI_DOUBLE_PRECISION,&
+                       to_pe,30,MPI_COMM_WORLD,req(3),ierr)
+	CALL MPI_Isend(p3d(1,1,nz),nslice,MPI_DOUBLE_PRECISION,&
+                       to_pe,40,MPI_COMM_WORLD,req(4),ierr)
+!
+        CALL MPI_WAITALL(4,req,status_array,ierr)
+#else
+	vz_aux=vz3d(:,:,nz)
+	p_aux=p3d(:,:,nz)
+#endif
+!
+	pgrad=0.0
+!
+	do k=2,nz-1
+	  do j=1,ny
+	     do i=1,nx
+	      nes3d(i,j,k)=1.0
+!
+! compute pressure and velocity gradients in the x-direction:
+!
+	      indexp=i+1
+	      indexm=i-1
+	      if(i.eq.ngrid)indexp=1
+	      if(i.eq.1)indexm=ngrid
+	      pgradx=abs(p3d(indexp,j,k)-p3d(indexm,j,k))
+	      vgradx=vx3d(indexp,j,k)-vx3d(indexm,j,k)
+!
+! y-direction:
+!
+	      indexp=j+1
+	      indexm=j-1
+	      if(j.eq.ngrid)indexp=1
+	      if(j.eq.1)indexm=ngrid
+	      pgrady=abs(p3d(i,indexp,k)-p3d(i,indexm,k))
+	      vgrady=vy3d(i,indexp,k)-vy3d(i,indexm,k)
+!
+! z-direction:
+!
+	      indexp=k+1
+	      indexm=k-1
+	      pgradz=abs(p3d(i,j,indexp)-p3d(i,j,indexm))
+	      vgradz=vz3d(i,j,indexp)-vz3d(i,j,indexm)
+!
+	      vgrad=vgradx+vgrady+vgradz
+	      pgrad=sqrt(pgradx*pgradx+pgrady*pgrady+pgradz*pgradz)/p3d(i,j,k)
+	      if(vgrad.lt.0.0.and.pgrad.gt.eta1)nes3d(i,j,k)=2.0
+	    enddo
+	  enddo
+	enddo
+!
+	k=1
+          do j=1,ny
+             do i=1,nx
+              nes3d(i,j,k)=1.0
+!
+! compute pressure and velocity gradients in the x-direction:
+!
+              indexp=i+1
+              indexm=i-1
+              if(i.eq.ngrid)indexp=1
+              if(i.eq.1)indexm=ngrid
+              pgradx=abs(p3d(indexp,j,k)-p3d(indexm,j,k))
+              vgradx=vx3d(indexp,j,k)-vx3d(indexm,j,k)
+!
+! y-direction:
+!
+              indexp=j+1
+              indexm=j-1
+              if(j.eq.ngrid)indexp=1
+              if(j.eq.1)indexm=ngrid
+              pgrady=abs(p3d(i,indexp,k)-p3d(i,indexm,k))
+              vgrady=vy3d(i,indexp,k)-vy3d(i,indexm,k)
+!
+! z-direction:
+!
+              indexp=k+1
+              indexm=k-1
+              pgradz=abs(p3d(i,j,indexp)-p_aux(i,j))
+              vgradz=vz3d(i,j,indexp)-vz_aux(i,j)
+!
+              vgrad=vgradx+vgrady+vgradz
+              pgrad=sqrt(pgradx*pgradx+pgrady*pgrady+pgradz*pgradz)/p3d(i,j,k)
+              if(vgrad.lt.0.0.and.pgrad.gt.eta1)nes3d(i,j,k)=2.0
+            enddo
+          enddo
+	continue
+!
+#ifdef USEMPI
+	to_pe=mype-1
+        if(to_pe.lt.0)to_pe=npes-1
+	from_pe=mype+1
+	if(from_pe.gt.npes-1)from_pe=0
+	CALL MPI_Irecv(vz_aux(1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       from_pe,10,MPI_COMM_WORLD,req(1),ierr)
+	CALL MPI_Irecv(p_aux(1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       from_pe,20,MPI_COMM_WORLD,req(2),ierr)
+	CALL MPI_Isend(vz3d(1,1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       to_pe,10,MPI_COMM_WORLD,req(3),ierr)
+	CALL MPI_Isend(p3d(1,1,1),nslice,MPI_DOUBLE_PRECISION,&
+                       to_pe,20,MPI_COMM_WORLD,req(4),ierr)
+!
+        CALL MPI_WAITALL(4,req,status_array,ierr)
+#else
+	vz_aux=vz3d(:,:,1)
+	p_aux=p3d(:,:,1)
+#endif
+!
+        k=nz
+          do j=1,ny
+             do i=1,nx
+              nes3d(i,j,k)=1.0
+!
+! x-direction:
+!
+              indexp=i+1
+              indexm=i-1
+              if(i.eq.ngrid)indexp=1
+              if(i.eq.1)indexm=ngrid
+              pgradx=abs(p3d(indexp,j,k)-p3d(indexm,j,k))
+              vgradx=vx3d(indexp,j,k)-vx3d(indexm,j,k)
+!
+! y-direction:
+!
+              indexp=j+1
+              indexm=j-1
+              if(j.eq.ngrid)indexp=1
+              if(j.eq.1)indexm=ngrid
+              pgrady=abs(p3d(i,indexp,k)-p3d(i,indexm,k))
+              vgrady=vy3d(i,indexp,k)-vy3d(i,indexm,k)
+!
+! z-direction:
+!
+              indexp=k+1
+              indexm=k-1
+              pgradz=abs(p_aux(i,j)-p3d(i,j,indexm))
+              vgradz=vz_aux(i,j)-vz3d(i,j,indexm)
+!
+              vgrad=vgradx+vgrady+vgradz
+              pgrad=sqrt(pgradx*pgradx+pgrady*pgrady+pgradz*pgradz)/p3d(i,j,k)
+              if(vgrad.lt.0.0.and.pgrad.gt.eta1)nes3d(i,j,k)=2.0
+            enddo
+          enddo
+        continue
+!
+	deallocate (vz_aux)
+	deallocate (p_aux)
+!
+END SUBROUTINE shsearch

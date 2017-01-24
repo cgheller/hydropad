@@ -1,0 +1,120 @@
+#include "hydrompi.def"
+!
+SUBROUTINE outbm
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+	USE heat
+        USE mpi_inc
+!
+! local variables
+!
+	IMPLICIT NONE
+	CHARACTER*1  :: ch1,ch2,ch3
+	CHARACTER*30 :: filename1
+	CHARACTER*30 :: filename2
+	CHARACTER*30 :: filename3
+	CHARACTER*30 :: filename4
+	CHARACTER*30 :: filename5
+	CHARACTER*30 :: filename6
+        INTEGER :: i,j,k
+	INTEGER :: rec,ii,nrec,ibut
+	INTEGER :: iunit1,iunit2,iunit3,iunit4,iunit5,iunit6
+	REAL*8  :: taux
+	REAL(kind=4) :: varaux,vxaux,vyaux,vzaux
+!
+	noutput=noutput+1
+	iunit1=901
+	iunit2=902
+	iunit3=903
+	iunit4=904
+	iunit5=905
+	iunit6=906
+!
+        call getindex(noutput,ch1,ch2,ch3)	
+!
+	do ii=0,npes-1
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+	if(mype.eq.ii)then
+	filename1='bmdens.'//ch1//ch2//ch3//'.pff'
+	filename2='bmtemp.'//ch1//ch2//ch3//'.pff'
+	filename3='bmv.'//ch1//ch2//ch3//'.pff'
+	filename6='dmdens.'//ch1//ch2//ch3//'.pff'
+	filename4='supernovae.'//ch1//ch2//ch3//'.pff'
+!
+	open(unit=iunit1,file=filename1,access='direct',recl=nlrec)
+	open(unit=iunit2,file=filename2,access='direct',recl=nlrec)
+	open(unit=iunit3,file=filename3,access='direct',recl=3*nlrec)
+	open(unit=iunit6,file=filename6,access='direct',recl=nlrec)
+	if(nuv.eq.1)&
+	open(unit=iunit4,file=filename4,access='direct',recl=nlrec)
+!
+	do k=1,nz
+	do j=1,ny
+	do i=1,nx
+	  varaux=real(rho3d(i,j,k))
+	  nrec=i+(j-1)*nx+(k-1)*ny*nx+nxnynz*mype
+	  write(iunit1,rec=nrec)varaux
+	enddo
+	enddo
+	enddo
+	do k=1,nz
+	do j=1,ny
+	do i=1,nx
+	  nrec=i+(j-1)*nx+(k-1)*ny*nx+nxnynz*mype
+	  taux=tfact*p3d(i,j,k)/rho3d(i,j,k)
+	  varaux=real(taux)
+	  write(iunit2,rec=nrec)varaux
+	enddo
+	enddo
+	enddo
+	do k=1,nz
+	do j=1,ny
+	do i=1,nx
+	  vxaux=real(vnor*vx3d(i,j,k))
+	  vyaux=real(vnor*vy3d(i,j,k))
+	  vzaux=real(vnor*vz3d(i,j,k))
+	  nrec=i+(j-1)*nx+(k-1)*ny*nx+nxnynz*mype
+	  write(iunit3,rec=nrec)vxaux,vyaux,vzaux
+	enddo
+	enddo
+	enddo
+	do k=1,nz
+	do j=1,ny
+	do i=1,nx
+	  varaux=real(rhodm3d(i,j,k))
+	  nrec=i+(j-1)*nx+(k-1)*ny*nx+nxnynz*mype
+	  write(iunit6,rec=nrec)varaux
+	enddo
+	enddo
+	enddo
+	if(nuv.eq.1)then
+	do k=1,nz
+	do j=1,ny
+	do i=1,nx
+	  varaux=real(sncell(i,j,k))
+	  nrec=i+(j-1)*nx+(k-1)*ny*nx+nxnynz*mype
+	  write(iunit4,rec=nrec)varaux
+	enddo
+	enddo
+	enddo
+	endif
+!
+	close(iunit1)
+	close(iunit2)
+	close(iunit3)
+	if(nuv.eq.1)close(iunit4)
+	close(iunit6)
+!
+	endif
+	enddo
+!
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+END SUBROUTINE outbm

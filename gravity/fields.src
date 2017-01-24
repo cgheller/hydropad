@@ -1,0 +1,160 @@
+#include "hydrompi.def"
+
+SUBROUTINE fields
+!
+      USE dimension
+      USE matrix
+      USE vector
+      USE scalar
+      USE mpi_inc
+!
+! local variables
+!
+      IMPLICIT NONE
+      INTEGER :: i,j,k
+      INTEGER :: iphig
+      INTEGER :: error
+      COMPLEX*16, DIMENSION (:,:,:), ALLOCATABLE :: A
+      REAL*8  :: sigma,dddmax,sqsigma
+      REAL*8  :: invngrid3,rhommm
+      REAL*8  :: sqsigma1,dddmax1,sigma1,meandens,sigmatot
+      REAL*8  :: rhotot,rdtold,dm_mean_tot,bm_mean_tot,dm_mean,bm_mean
+      REAL*8  :: vsigma_pe,vsigma1_pe,vdddmax_pe,vdddmax1_pe
+!
+      common/out/sqsigma,sqsigma1,dddmax,dddmax1
+!
+      allocate(A(nx,ny,nz),STAT=error)
+      if(error.ne.0)then
+	write(*,*)mype,' failed in allocating array A in FIELDS'
+	stop
+      endif
+      A=(0.0,0.0)
+      invngrid3=1.0/float(ngrid*ngrid*ngrid)
+!
+! compute total density (bm+dm)
+!
+      if(nstep.ne.0)then
+	meandens=1.0*rdmfact+1.0*rbmfact
+	sigma=0.0
+	sigma1=0.0
+	dddmax=0.0
+	dddmax1=0.0
+	vsigma_pe=0.0
+	vsigma1_pe=0.0
+	vdddmax_pe=0.0
+	vdddmax1_pe=0.0
+	bm_mean=0.0
+	dm_mean=0.0
+	bm_mean_tot=0.0
+	dm_mean_tot=0.0
+!
+        do k=1,nz
+        do j=1,ny
+        do i=1,nx
+	  bm_mean=bm_mean+rho3d(i,j,k)
+	  dm_mean=dm_mean+rhodm3d(i,j,k)
+	enddo
+	enddo
+        enddo
+!
+#ifdef USEMPI
+	CALL MPI_Allreduce(bm_mean,bm_mean_tot,1,MPI_DOUBLE_PRECISION,&
+                           MPI_SUM,MPI_COMM_WORLD,ierr)
+	CALL MPI_Allreduce(dm_mean,dm_mean_tot,1,MPI_DOUBLE_PRECISION,&
+                           MPI_SUM,MPI_COMM_WORLD,ierr)
+!
+#else
+	bm_mean_tot=bm_mean
+	dm_mean_tot=dm_mean
+#endif
+	bm_mean_tot=bm_mean_tot*invngrid3
+	dm_mean_tot=dm_mean_tot*invngrid3
+	rhommm=dm_mean_tot+bm_mean_tot
+!
+        do k=1,nz
+        do j=1,ny
+        do i=1,nx
+	  vsigma_pe=vsigma_pe+&
+                    (rhodm3d(i,j,k)-dm_mean_tot)*&
+                    (rhodm3d(i,j,k)-dm_mean_tot)
+	  vdddmax_pe=max(vdddmax_pe,rhodm3d(i,j,k))
+          vsigma1_pe=vsigma1_pe+&
+                    (rho3d(i,j,k)-bm_mean_tot)*&
+                    (rho3d(i,j,k)-bm_mean_tot)
+	  vdddmax1_pe=max(vdddmax1_pe,rho3d(i,j,k))
+!
+          phi3d(i,j,k)=rhodm3d(i,j,k)+rho3d(i,j,k)
+!
+         enddo
+         enddo
+         enddo
+!
+#ifdef USEMPI
+	CALL MPI_Allreduce(vsigma_pe,sigma,1,MPI_DOUBLE_PRECISION,&
+                           MPI_SUM,MPI_COMM_WORLD,ierr)
+	CALL MPI_Allreduce(vsigma1_pe,sigma1,1,MPI_DOUBLE_PRECISION,&
+                           MPI_SUM,MPI_COMM_WORLD,ierr)
+	CALL MPI_Allreduce(vdddmax_pe,dddmax,1,MPI_DOUBLE_PRECISION,&
+                           MPI_MAX,MPI_COMM_WORLD,ierr)
+	CALL MPI_Allreduce(vdddmax1_pe,dddmax1,1,MPI_DOUBLE_PRECISION,&
+                           MPI_MAX,MPI_COMM_WORLD,ierr)
+#else
+	sigma=vsigma_pe
+	sigma1=vsigma1_pe
+	dddmax=vdddmax_pe
+	dddmax1=vdddmax1_pe
+#endif
+!
+	sqsigma=sqrt(sigma*invngrid3)/dm_mean_tot
+	sqsigma1=sqrt(sigma1*invngrid3)/bm_mean_tot
+	dddmax=dmfact*dddmax
+	dddmax1=bmfact*dddmax1
+!
+	endif	
+	if(nstep.eq.0)return
+!
+! calculate gravitational potential
+!
+        iphig=0
+	call gravfield(A,iphig)
+!
+#ifdef USEMPI
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+        if(nstep.eq.1)then
+          do k=1,nz
+          do j=1,ny
+          do i=1,nx
+            phiold3d(i,j,k)=phi3d(i,j,k)
+          enddo
+          enddo
+          enddo
+        endif
+!
+! calculate gravitational forces
+!
+        iphig=1
+        call gravfield(A,iphig)
+!
+#ifdef USEMPI
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+        iphig=2
+        call gravfield(A,iphig)
+!
+#ifdef USEMPI
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+        iphig=3
+        call gravfield(A,iphig)
+!
+#ifdef USEMPI
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+        deallocate(A)
+!
+END SUBROUTINE fields

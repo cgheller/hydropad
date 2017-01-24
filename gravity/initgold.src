@@ -1,0 +1,76 @@
+#include "hydrompi.def"
+
+SUBROUTINE initgold
+!
+      USE dimension
+      USE matrix
+      USE vector
+      USE scalar
+      USE mpi_inc
+!
+      IMPLICIT NONE
+!
+! local variables
+!
+      INTEGER :: i,j,k
+      INTEGER :: nslice,nsliceh,nslice0
+      INTEGER :: to_pe,from_pe
+      INTEGER :: req(12)
+#ifdef USEMPI
+      INTEGER :: status_array(MPI_STATUS_SIZE,12)
+#endif
+!
+      nslice0=nx*ny
+      nsliceh=nslice0
+      nslice=2*nslice0
+!
+! communicate ghost planes
+!
+#ifdef USEMPI
+      to_pe=mype-1
+      if(to_pe.lt.0)to_pe=npes-1
+      from_pe=mype+1
+      if(from_pe.gt.npes-1)from_pe=0
+!
+      CALL MPI_Irecv(gxold(1,1,nz+1),nslice,MPI_DOUBLE_PRECISION,&
+                    from_pe,10,MPI_COMM_WORLD,req(1),ierr)
+      CALL MPI_Irecv(gxold(1,1,0),nsliceh,MPI_DOUBLE_PRECISION,&
+                    to_pe,20,MPI_COMM_WORLD,req(2),ierr)
+!
+      CALL MPI_Isend(gxold(1,1,1),nslice,MPI_DOUBLE_PRECISION,&
+                    to_pe,10,MPI_COMM_WORLD,req(3),ierr)
+      CALL MPI_Isend(gxold(1,1,nz),nsliceh,MPI_DOUBLE_PRECISION,&
+                    from_pe,20,MPI_COMM_WORLD,req(4),ierr)
+!
+      CALL MPI_Irecv(gyold(1,1,nz+1),nslice,MPI_DOUBLE_PRECISION,&
+                    from_pe,30,MPI_COMM_WORLD,req(5),ierr)
+      CALL MPI_Irecv(gyold(1,1,0),nsliceh,MPI_DOUBLE_PRECISION,&
+                    to_pe,40,MPI_COMM_WORLD,req(6),ierr)
+!
+      CALL MPI_Isend(gyold(1,1,1),nslice,MPI_DOUBLE_PRECISION,&
+                    to_pe,30,MPI_COMM_WORLD,req(7),ierr)
+      CALL MPI_Isend(gyold(1,1,nz),nsliceh,MPI_DOUBLE_PRECISION,&
+                    from_pe,40,MPI_COMM_WORLD,req(8),ierr)
+!
+      CALL MPI_Irecv(gzold(1,1,nz+1),nslice,MPI_DOUBLE_PRECISION,&
+                    from_pe,50,MPI_COMM_WORLD,req(9),ierr)
+      CALL MPI_Irecv(gzold(1,1,0),nsliceh,MPI_DOUBLE_PRECISION,&
+                    to_pe,60,MPI_COMM_WORLD,req(10),ierr)
+!
+      CALL MPI_Isend(gzold(1,1,1),nslice,MPI_DOUBLE_PRECISION,&
+                    to_pe,50,MPI_COMM_WORLD,req(11),ierr)
+      CALL MPI_Isend(gzold(1,1,nz),nsliceh,MPI_DOUBLE_PRECISION,&
+                   from_pe,60,MPI_COMM_WORLD,req(12),ierr)
+!
+      CALL MPI_WAITALL(12,req,status_array,ierr)
+#else
+      gxold(:,:,nz+1)=gxold(:,:,1)
+      gxold(:,:,0)   =gxold(:,:,nz)
+      gyold(:,:,nz+1)=gyold(:,:,1)
+      gyold(:,:,0)   =gyold(:,:,nz)
+      gzold(:,:,nz+1)=gzold(:,:,1)
+      gzold(:,:,0)   =gzold(:,:,nz)
+#endif
+
+!
+END SUBROUTINE initgold

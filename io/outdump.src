@@ -1,0 +1,126 @@
+#include "hydrompi.def"
+!
+SUBROUTINE outdumpbm
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+	USE heat
+        USE mpi_inc
+!
+! local variables
+!
+	IMPLICIT NONE
+        CHARACTER  :: ch_i1*1, ch_i2*1, ch_i3*1, file*20
+        INTEGER :: nfile,nfilemin,nfilemax,ifile
+        INTEGER :: i1,i2,i3,i2aux,iunit
+        INTEGER :: i,j,k
+!
+	k=0
+        nfile=nz
+        nfilemin=mype*nfile
+        nfilemax=nfilemin+nfile-1
+        do ifile=nfilemin,nfilemax
+! opening files
+          i1=ifile/100
+          i2aux=ifile-i1*100
+          i2=i2aux/10
+          i3=i2aux-i2*10
+          i1=i1+48
+          i2=i2+48
+          i3=i3+48
+          ch_i1=char(i1)
+          ch_i2=char(i2)
+          ch_i3=char(i3)
+          file='outdumpbm.'//ch_i1//ch_i2//ch_i3
+          iunit=200+ifile
+          open (iunit,file=file,status='unknown',form='unformatted')
+!
+	  write(iunit)npl,nrot,nstep
+	  write(iunit)at,atnew
+	  write(iunit)told,t,dt,dtold
+	  write(iunit)ntotsn
+	  write(iunit)noutput 
+	  k=k+1
+	  write(iunit)((p3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((rho3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((vx3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((vy3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((vz3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((cho3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((phi3d(i,j,k),i=1,nx),j=1,ny)
+	  write(iunit)((phiold3d(i,j,k),i=1,nx),j=1,ny)
+          write(iunit)((gxold(i,j,k),i=1,nx),j=1,ny)
+          write(iunit)((gyold(i,j,k),i=1,nx),j=1,ny)
+          write(iunit)((gzold(i,j,k),i=1,nx),j=1,ny)
+	  if(nuv.eq.1)&
+	  write(iunit)((sncell(i,j,k),i=1,nx),j=1,ny)  
+	close(iunit)
+	enddo
+!
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+END SUBROUTINE outdumpbm
+!
+!*****************************************************************
+!*****************************************************************
+!
+#include "hydrompi.def"
+!
+SUBROUTINE outdumpdm
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+!
+! local variables
+!
+        CHARACTER :: ch_i1*1, ch_i2*1, ch_i3*1, file*20
+        INTEGER :: nfile,nfilemin,nfilemax,ifile
+        INTEGER :: i1,i2,i3,i2aux,iunit
+	INTEGER :: npxpe,iimin,iimax,ics
+!
+	npxpe=nparmax/nz
+        nfile=nz
+        nfilemin=mype*nfile
+        nfilemax=nfilemin+nfile-1
+	ics=0
+        do ifile=nfilemin,nfilemax
+	  iimin=ics*npxpe+1
+	  iimax=(ics+1)*npxpe
+! opening files
+          i1=ifile / 100
+          i2aux=ifile - i1*100
+          i2=i2aux / 10
+          i3=i2aux - i2*10
+          i1=i1+48
+          i2=i2+48
+          i3=i3+48
+          ch_i1=char(i1)
+          ch_i2=char(i2)
+          ch_i3=char(i3)
+          file='outdumpdm.' // ch_i1 // ch_i2 // ch_i3
+          iunit=200+ifile
+          open(iunit,file=file,status='unknown',form='unformatted')
+!
+	  write(iunit)(x1(i),i=iimin,iimax)
+	  write(iunit)(x2(i),i=iimin,iimax)
+	  write(iunit)(x3(i),i=iimin,iimax)
+	  write(iunit)(v1(i),i=iimin,iimax)
+	  write(iunit)(v2(i),i=iimin,iimax)
+	  write(iunit)(v3(i),i=iimin,iimax)
+!
+	  ics=ics+1
+	  close(iunit)
+	enddo
+!
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+END SUBROUTINE outdumpdm

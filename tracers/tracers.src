@@ -1,0 +1,84 @@
+#include "hydrompi.def"
+
+SUBROUTINE tracers
+!
+
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+        USE profile
+        USE tracers_mod
+	INTEGER icell,jcell,kcell,i,j
+	REAL*8 :: dtat
+	REAL*8 :: vxp,vyp,vzp
+	INTEGER :: kpe
+	INTEGER :: ier1,ier2,ier3,ier4,ier5,ier6
+#ifdef MPI2
+
+	INTEGER(kind=MPI_ADDRESS_KIND) tdisp
+
+	CALL MPI_WIN_FENCE(0,winvx,ier4)
+	CALL MPI_WIN_FENCE(0,winvy,ier5)
+	CALL MPI_WIN_FENCE(0,winvz,ier6)
+
+!	if(mype.eq.0)then
+	dtat=dt/at
+	!loop sui cluster
+	do i=1,ntcluster
+	!loop sulle particelle
+	       do j=1,ntrackers(i)/npes
+		icell=int(xtrack(j,i))+1
+		jcell=int(ytrack(j,i))+1
+		kcell=int(ztrack(j,i))+1
+
+		kpe = int((kcell-1)/nz)
+		kcell = kcell - kpe*nz
+		tdisp = (icell+nx*(jcell-1)+nx*ny*(kcell-1)-1)*size
+
+
+		CALL MPI_WIN_LOCK(MPI_LOCK_SHARED,kpe,0,winvx,ierr)
+		CALL MPI_GET(vxp,1,MPI_DOUBLE_PRECISION,&
+                             kpe,tdisp,&
+                             1,MPI_DOUBLE_PRECISION,winvx,ier1)
+		CALL MPI_WIN_UNLOCK(kpe,winvx,ier4)
+
+		CALL MPI_WIN_LOCK(MPI_LOCK_SHARED,kpe,0,winvy,ierr)
+		CALL MPI_GET(vyp,1,MPI_DOUBLE_PRECISION,&
+                             kpe,tdisp,&
+                             1,MPI_DOUBLE_PRECISION,winvy,ier2)
+		CALL MPI_WIN_UNLOCK(kpe,winvy,ier5)
+
+		CALL MPI_WIN_LOCK(MPI_LOCK_SHARED,kpe,0,winvz,ierr)
+		CALL MPI_GET(vzp,1,MPI_DOUBLE_PRECISION,&
+                             kpe,tdisp,&
+                             1,MPI_DOUBLE_PRECISION,winvz,ier3)
+		CALL MPI_WIN_UNLOCK(kpe,winvz,ier6)
+
+		xtrack(j,i)=xtrack(j,i)+dtat*vxp
+		ytrack(j,i)=ytrack(j,i)+dtat*vyp
+		ztrack(j,i)=ztrack(j,i)+dtat*vzp
+		
+		if(xtrack(j,i).gt.ngrid)xtrack(j,i)=xtrack(j,i)-ngrid
+		if(ytrack(j,i).gt.ngrid)ytrack(j,i)=ytrack(j,i)-ngrid
+		if(ztrack(j,i).gt.ngrid)ztrack(j,i)=ztrack(j,i)-ngrid
+		if(xtrack(j,i).lt.0.0)xtrack(j,i)=xtrack(j,i)+ngrid
+		if(ytrack(j,i).lt.0.0)ytrack(j,i)=ytrack(j,i)+ngrid
+		if(ztrack(j,i).lt.0.0)ztrack(j,i)=ztrack(j,i)+ngrid
+	
+	enddo
+	enddo
+	close(200+mype)
+
+!	endif
+
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+
+
+	CALL MPI_WIN_FENCE(0,winvx,ierr)
+	CALL MPI_WIN_FENCE(0,winvy,ierr)
+	CALL MPI_WIN_FENCE(0,winvz,ierr)
+
+#endif
+END SUBROUTINE tracers

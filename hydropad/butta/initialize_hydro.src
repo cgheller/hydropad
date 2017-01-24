@@ -1,0 +1,48 @@
+#include "hydrompi.def"
+!
+SUBROUTINE initialize_hydro
+!
+USE dimension
+USE matrix
+USE vector
+USE scalar
+USE mpi_inc
+USE io_mod
+#ifdrf TRACERS
+	USE tracers_mod
+#endif
+!
+IMPLICIT NONE
+!
+! local variables
+!
+dth=0.5*dt
+t0h0=0.66666666667
+!
+! initialize time parameters
+!
+tin=0.0
+told=tin
+dt=0.01
+dth=0.5*dt
+dtold=dt
+t=tin+dt
+thalf=told+dt/2.0
+at=1.0
+atnew=at
+dat=0.0
+ath=1.0
+dath=0.0
+datnew=0.0
+rat=1.0/at
+rdtath=dt/ath
+omega=1.0
+hubble=1.0
+redshiftold=0.0
+redshift=0.0
+
+
+
+
+
+END SUBROUTINE initialize_hydro

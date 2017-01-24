@@ -1,0 +1,30 @@
+SUBROUTINE dealloc_vectors(dgrid)
+!
+USE dimension
+USE vector
+USE mpi_inc
+!
+IMPLICIT NONE
+INTEGER :: dgrid
+
+DEALLOCATE (cho)
+DEALLOCATE (nes)
+DEALLOCATE (pres)
+DEALLOCATE (rho)
+DEALLOCATE (vx)
+DEALLOCATE (vy)
+DEALLOCATE (vz)
+DEALLOCATE (ghalf)
+DEALLOCATE (g)
+DEALLOCATE (c)
+DEALLOCATE (eint)
+DEALLOCATE (etot)
+DEALLOCATE (rhoold1d)
+DEALLOCATE (vxold1d)
+DEALLOCATE (phi1)
+DEALLOCATE (phi0)
+DEALLOCATE (flt)
+DEALLOCATE (nu)
+DEALLOCATE (sk2)
+!
+END SUBROUTINE dealloc_vectors

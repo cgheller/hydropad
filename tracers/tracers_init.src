@@ -1,0 +1,140 @@
+#include "hydrompi.def"
+
+SUBROUTINE tracers_init(startdump)
+
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+        USE profile
+        USE tracers_mod
+	integer i,j,k,ii,error,it,startdump,disp_unit
+	INTEGER :: ntcell_eff
+#ifdef MPI2
+	INTEGER(kind=MPI_ADDRESS_KIND) size_of_array,tdisp
+	character tracers
+
+	checkstarttrack=1
+
+	OPEN(unit=11,file="tracers.dat")
+
+	READ(11,*)first_time,troutstep,ntcluster
+
+	ALLOCATE (xtstart(ntcluster),STAT=error)
+	ALLOCATE (ytstart(ntcluster),STAT=error)
+	ALLOCATE (ztstart(ntcluster),STAT=error)
+	ALLOCATE (ntcell(ntcluster),STAT=error)
+	ALLOCATE (ntrackers(ntcluster),STAT=error)
+	ALLOCATE (njump(ntcluster),STAT=error)
+
+	!loop ncluster
+	do ii=1,ntcluster
+	READ(11,*)xtstart(ii),ytstart(ii),ztstart(ii),ntcell(ii),njump(ii)
+	ntrackers(ii)=ntcell(ii)/njump(ii)
+	ntrackers(ii)=ntrackers(ii)**3
+	enddo
+
+	CLOSE(11)
+
+	ALLOCATE (xtrack(ntrackers(ntcluster)/npes,ntcluster),STAT=error)
+	ALLOCATE (ytrack(ntrackers(ntcluster)/npes,ntcluster),STAT=error)
+	ALLOCATE (ztrack(ntrackers(ntcluster)/npes,ntcluster),STAT=error)
+	ALLOCATE (xtrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+	ALLOCATE (ytrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+	ALLOCATE (ztrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+	xtrack=0.0
+	ytrack=0.0
+	ztrack=0.0
+
+	if(mype.eq.0)then
+
+
+	if(startdump.eq.0.or.first_time.eq.0)then
+	!loop sui cluster
+	do it=1,ntcluster
+
+	ntcell_eff=ntcell(it)/njump(it)
+
+	!loop sulle griglie
+	ii=0
+	do k=1,ntcell(it),njump(it)
+	do j=1,ntcell(it),njump(it)
+	do i=1,ntcell(it),njump(it)
+
+	  ii=ii+1
+!	  ii=i+ntcell_eff*(j-1)+(ntcell_eff**2)*(k-1)
+	  xtrack0(ii,it)=xtstart(it)+i-0.5-ntcell(it)/2
+	  ytrack0(ii,it)=ytstart(it)+j-0.5-ntcell(it)/2
+	  ztrack0(ii,it)=ztstart(it)+k-0.5-ntcell(it)/2
+	
+	  if(xtrack0(ii,it).gt.ngrid) xtrack0(ii,it)=xtrack0(ii,it)-ngrid
+	  if(ytrack0(ii,it).gt.ngrid) ytrack0(ii,it)=ytrack0(ii,it)-ngrid
+	  if(ztrack0(ii,it).gt.ngrid) ztrack0(ii,it)=ztrack0(ii,it)-ngrid	
+	  if(xtrack0(ii,it).le.0) xtrack0(ii,it)=xtrack0(ii,it)+ngrid
+	  if(ytrack0(ii,it).le.0) ytrack0(ii,it)=ytrack0(ii,it)+ngrid
+	  if(ztrack0(ii,it).le.0) ztrack0(ii,it)=ztrack0(ii,it)+ngrid	
+	
+	enddo
+	enddo
+	enddo
+	enddo
+	else
+		CALL intracers
+	endif
+
+	endif
+
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+
+	! communicate each data piece to the processors
+
+	do it=1,ntcluster
+
+	   CALL MPI_SCATTER(xtrack0(1,it),ntrackers(it)/npes,&
+			    MPI_DOUBLE_PRECISION,xtrack(1,it),&
+			    ntrackers(it)/npes,&
+			    MPI_DOUBLE_PRECISION,0,&
+			    MPI_COMM_WORLD,ierr)
+           CALL MPI_SCATTER(ytrack0(1,it),ntrackers(it)/npes,&
+                            MPI_DOUBLE_PRECISION,ytrack(1,it),&
+                            ntrackers(it)/npes,&
+                            MPI_DOUBLE_PRECISION,0,&
+                            MPI_COMM_WORLD,ierr)
+           CALL MPI_SCATTER(ztrack0(1,it),ntrackers(it)/npes,&
+                            MPI_DOUBLE_PRECISION,ztrack(1,it),&
+                            ntrackers(it)/npes,&
+                            MPI_DOUBLE_PRECISION,0,&
+                            MPI_COMM_WORLD,ierr)
+	enddo
+
+!	do i=1,ntrackers(1)/npes
+!	  write(100+mype,'(i6,3(1x,e13.7))')i,xtrack(i,1),ytrack(i,1),ztrack(i,1)
+!	enddo
+
+	close(10)
+	close(100+mype)
+	deallocate (xtrack0)
+	deallocate (ytrack0)
+	deallocate (ztrack0)
+
+! initialize memory windows
+
+	disp_unit = 1
+
+        size=8
+        size_of_array = size * nx*ny*nz
+
+        CALL MPI_WIN_CREATE(vx3d,size_of_array,disp_unit,MPI_INFO_NULL,&
+                            MPI_COMM_WORLD,winvx,ierr)
+        CALL MPI_WIN_CREATE(vy3d,size_of_array,disp_unit,MPI_INFO_NULL,&
+                            MPI_COMM_WORLD,winvy,ierr)
+        CALL MPI_WIN_CREATE(vz3d,size_of_array,disp_unit,MPI_INFO_NULL,&
+                            MPI_COMM_WORLD,winvz,ierr)
+
+        CALL MPI_WIN_FENCE(0,winvx,ierr)
+        CALL MPI_WIN_FENCE(0,winvy,ierr)
+        CALL MPI_WIN_FENCE(0,winvz,ierr)
+#endif
+
+END SUBROUTINE tracers_init

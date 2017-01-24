@@ -1,0 +1,191 @@
+#include "hydrompi.def"
+!
+SUBROUTINE density(x1_aux_r,x2_aux_r,x3_aux_r,n_tot)
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+!
+	IMPLICIT NONE
+!
+! local variables
+!
+#ifdef USEMPI
+        INTEGER :: status_array(MPI_STATUS_SIZE,2)
+#endif
+        INTEGER :: req(2)
+	INTEGER :: i1,i2,i3,ipe3,to_pe,from_pe,i3abs
+	INTEGER :: n_tot_s,nxny
+	INTEGER :: index,stride
+	INTEGER :: index1,stride1
+	INTEGER :: i11,i21,i31
+        INTEGER :: i,j,k
+	INTEGER, INTENT(IN) :: n_tot
+	REAL*8  :: dd1,dd2,dd3
+	REAL*8  :: de1,de2,de3
+	REAL*8  :: d1,d2,d3,d4,d5,d6,d7,d8
+	REAL*8  :: rhoaux(nx,ny),rhorecv(nx,ny)
+	REAL*8, INTENT(IN) :: x1_aux_r(n_tot+1)
+	REAL*8, INTENT(IN) :: x2_aux_r(n_tot+1)
+	REAL*8, INTENT(IN) :: x3_aux_r(n_tot+1)
+!
+! initialize density
+!
+	nxny=nx*ny
+	rhodm3d=0.0
+	rhoaux=0.0
+	rhorecv=0.0
+!
+! At this point each processor has its own list (xn1_aux_r) of
+! particles which falls in the processor itself (but which
+! are stored in OTHER processors)
+!
+! distribute masses of the particles which lies in the processor
+! and belong to the processor ITSELF
+!
+	do j=1,nparmax
+	  i3=int(x3(j)+0.5)
+	  i3abs=i3
+	  if(i3.eq.0)i3=npes*nz
+	  ipe3=(i3-1)/nz
+	  if(ipe3.eq.mype)then
+!
+! find position on the grid
+!
+            i3=i3-mype*nz
+            i1=int(x1(j)+0.5)
+            i2=int(x2(j)+0.5)
+!
+            dd1=x1(j)-float(i1)+0.5
+            dd2=x2(j)-float(i2)+0.5
+            dd3=x3(j)-float(i3abs)+0.5
+            de1=1.0-dd1
+            de2=1.0-dd2
+            de3=1.0-dd3
+            if(i1.eq.0)i1=nx
+            if(i2.eq.0)i2=ny
+!
+! calculate weights
+!
+            d1= de1*de2*de3
+            d2= dd1*de2*de3
+            d3= de1*dd2*de3
+            d4= dd1*dd2*de3
+            d5= de1*de2*dd3
+            d6= dd1*de2*dd3
+            d7= de1*dd2*dd3
+            d8= dd1*dd2*dd3
+            i11=i1+1
+            if(i11.gt.nx)i11=1
+            i21=i2+1
+            if(i21.gt.ny)i21=1
+	    i31=i3+1
+!
+! calculate density
+!
+	    rhodm3d(i1,i2,i3)=rhodm3d(i1,i2,i3)+d1
+	    rhodm3d(i11,i2,i3)=rhodm3d(i11,i2,i3)+ d2
+	    rhodm3d(i1,i21,i3)=rhodm3d(i1,i21,i3)+d3
+	    rhodm3d(i11,i21,i3)=rhodm3d(i11,i21,i3)+d4
+	    if(i3.ne.nz)then
+	      rhodm3d(i1,i2,i31)=rhodm3d(i1,i2,i31)+d5
+	      rhodm3d(i11,i2,i31)=rhodm3d(i11,i2,i31)+d6
+	      rhodm3d(i1,i21,i31)=rhodm3d(i1,i21,i31)+d7
+	      rhodm3d(i11,i21,i31)=rhodm3d(i11,i21,i31)+d8
+	    else
+	      i3=1
+	      rhoaux(i1,i2)=rhoaux(i1,i2)+d5
+              rhoaux(i11,i2)=rhoaux(i11,i2)+d6
+              rhoaux(i1,i21)=rhoaux(i1,i21)+d7
+              rhoaux(i11,i21)=rhoaux(i11,i21)+d8
+	    endif
+	  endif
+	enddo
+!
+! distribute masses of the particles which lies in the processor
+! and belong to ANOTHER processor
+!
+	do j=1,n_tot    
+!
+! find position on the grid
+!
+          i3=int(x3_aux_r(j)+0.5)
+	  i3abs=i3
+	  if(i3.eq.0)i3=npes*nz
+          i3=i3-mype*nz
+          i1=int(x1_aux_r(j)+0.5)
+          i2=int(x2_aux_r(j)+0.5)
+!
+          dd1=x1_aux_r(j)-float(i1)+0.5
+          dd2=x2_aux_r(j)-float(i2)+0.5
+          dd3=x3_aux_r(j)-float(i3abs)+0.5
+          de1=1.0-dd1
+          de2=1.0-dd2
+          de3=1.0-dd3
+          if(i1.eq.0)i1=nx
+          if(i2.eq.0)i2=ny
+!
+! calculate weights
+!
+          d1= de1*de2*de3
+          d2= dd1*de2*de3
+          d3= de1*dd2*de3
+          d4= dd1*dd2*de3
+          d5= de1*de2*dd3
+          d6= dd1*de2*dd3
+          d7= de1*dd2*dd3
+          d8= dd1*dd2*dd3
+	  i11=i1+1
+	  if(i1.eq.nx)i11=1
+          i21=i2+1
+	  if(i2.eq.ny)i21=1
+          i31=i3+1
+!
+! calculate density
+!
+	    rhodm3d(i1,i2,i3)=rhodm3d(i1,i2,i3)+d1
+	    rhodm3d(i11,i2,i3)=rhodm3d(i11,i2,i3)+ d2
+	    rhodm3d(i1,i21,i3)=rhodm3d(i1,i21,i3)+d3
+	    rhodm3d(i11,i21,i3)=rhodm3d(i11,i21,i3)+d4
+	    if(i3.ne.nz)then
+	      rhodm3d(i1,i2,i31)=rhodm3d(i1,i2,i31)+d5
+	      rhodm3d(i11,i2,i31)=rhodm3d(i11,i2,i31)+d6
+	      rhodm3d(i1,i21,i31)=rhodm3d(i1,i21,i31)+d7
+	      rhodm3d(i11,i21,i31)=rhodm3d(i11,i21,i31)+d8
+	    else
+	      i3=1
+	      rhoaux(i1,i2)=rhoaux(i1,i2)+d5
+              rhoaux(i11,i2)=rhoaux(i11,i2)+d6
+              rhoaux(i1,i21)=rhoaux(i1,i21)+d7
+              rhoaux(i11,i21)=rhoaux(i11,i21)+d8
+	    endif
+	enddo
+!
+! complete density calculation with the boundaries
+!
+#ifdef USEMPI
+	to_pe=mype+1
+	if(to_pe.eq.npes)to_pe=0
+	from_pe=mype-1
+	if(from_pe.lt.0)from_pe=npes-1
+	CALL MPI_Irecv(rhorecv(1,1),nxny,MPI_DOUBLE_PRECISION,&
+                       from_pe,20,MPI_COMM_WORLD,req(1),ierr)
+	CALL MPI_Isend(rhoaux(1,1),nxny,MPI_DOUBLE_PRECISION,&
+                       to_pe,20,MPI_COMM_WORLD,req(2),ierr)
+!
+        CALL MPI_WAITALL(2,req,status_array,ierr)
+#else
+	rhorecv=rhoaux
+#endif
+!
+	do j=1,ny
+	do i=1,nx
+	  rhodm3d(i,j,1)=rhodm3d(i,j,1)+rhorecv(i,j)
+	enddo
+	enddo
+!
+	rhodm3d=amass*rhodm3d
+!
+END SUBROUTINE density

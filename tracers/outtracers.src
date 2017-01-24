@@ -1,0 +1,81 @@
+#include "hydrompi.def"
+
+SUBROUTINE outtracers(dump)
+
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+        USE profile
+        USE tracers_mod
+	CHARACTER*20 :: filename
+	CHARACTER*24 :: filename1
+        CHARACTER*1 :: ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8
+	INTEGER nlrec1,i,j,npart_aux,error
+	INTEGER, INTENT(IN) :: dump
+	REAL(KIND=4) :: xaux,yaux,zaux
+#ifdef MPI2
+
+	call getindex10000(nstep,ch1,ch2,ch3,ch7,ch8)
+	nlrec1=12
+        ALLOCATE (xtrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+        ALLOCATE (ytrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+        ALLOCATE (ztrack0(ntrackers(ntcluster),ntcluster),STAT=error)
+
+	!loop sui cluster
+	do i=1,ntcluster
+
+		npart_aux=ntrackers(i)/npes
+
+                CALL MPI_GATHER(xtrack(1,i),npart_aux,&
+                            MPI_DOUBLE_PRECISION,xtrack0(1,i),&
+                            npart_aux,&
+                            MPI_DOUBLE_PRECISION,0,&
+                            MPI_COMM_WORLD,ierr)
+                CALL MPI_GATHER(ytrack(1,i),npart_aux,&
+                            MPI_DOUBLE_PRECISION,ytrack0(1,i),&
+                            npart_aux,&
+                            MPI_DOUBLE_PRECISION,0,&
+                            MPI_COMM_WORLD,ierr)
+                CALL MPI_GATHER(ztrack(1,i),npart_aux,&
+                            MPI_DOUBLE_PRECISION,ztrack0(1,i),&
+                            npart_aux,&
+                            MPI_DOUBLE_PRECISION,0,&
+                            MPI_COMM_WORLD,ierr)
+
+
+		if(mype.eq.0)then
+		call getindex(i,ch4,ch5,ch6)
+		filename='tracer.'//ch1//ch2//ch3//ch7//ch8//'.'&
+                        //ch4//ch5//ch6//'.pff'
+		filename1='tracerdump.'//ch1//ch2//ch3//ch7//ch8//'.'&
+                        //ch4//ch5//ch6//'.pff'
+		open(unit=100,file=filename,access='direct',recl=nlrec1)
+		!loop sulle particelle
+		if(dump.eq.1)then
+			open(unit=101,file=filename1,access='direct',recl=2*nlrec1)
+			do j=1,ntrackers(i)
+			  write(101,rec=j)xtrack0(j,i),ytrack0(j,i),ztrack0(j,i)
+			enddo
+			close(101)
+		endif
+	        do j=1,ntrackers(i)	
+			xaux=real(xtrack0(j,i))
+			yaux=real(ytrack0(j,i))
+			zaux=real(ztrack0(j,i))
+			write(100,rec=j)xaux,yaux,zaux
+		enddo
+		close(100)
+		endif
+
+	enddo
+
+        deallocate (xtrack0)
+        deallocate (ytrack0)
+        deallocate (ztrack0)
+
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+
+END SUBROUTINE outtracers

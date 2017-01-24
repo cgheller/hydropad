@@ -1,0 +1,83 @@
+#include "hydrompi.def"
+!
+SUBROUTINE outbox
+!
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+        USE io_mod
+!
+! local variables
+!
+	IMPLICIT NONE
+        REAL(kIND=4) :: vaux1,vaux2,vaux3,vaux4,vaux5,vaux6
+        CHARACTER*1  :: ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8
+        CHARACTER*30 :: filename1,filename6
+        INTEGER :: i,j,k
+	INTEGER :: ippo
+        INTEGER :: rec,ii,nlrec1,nrec,irec
+        INTEGER :: iunit1,ijump,njump,ibox
+        INTEGER :: pe_centre(nn)
+	INTEGER :: i1,j1,k1
+!
+	iunit1=800
+	nlrec1=6*nlrec
+        call getindex10000(nstep,ch1,ch2,ch3,ch7,ch8)
+!
+	do ibox=1,nbox
+!
+        call getindex(ibox,ch4,ch5,ch6)
+	filename1='box.'//ch1//ch2//ch3//ch7//ch8//'.'&
+                        //ch4//ch5//ch6//'.pff'
+	if(mype.eq.1)then
+	  vaux1=real(t)
+	  vaux2=real(redshift)
+	  vaux3=real(lb(ibox))
+	  vaux4=real(xb(ibox))
+	  vaux5=real(yb(ibox))
+	  vaux6=real(zb(ibox))
+	  open(unit=iunit1,file=filename1,access='direct',recl=nlrec1)
+	  write(iunit1,rec=1)vaux1,vaux2,vaux3,vaux4,vaux5,vaux6
+	  close(iunit1)
+	endif
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+	do k1=1,nlb(ibox)
+#ifdef USEMPI
+	  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+	  if(mype.eq.resident(ibox,k1))then
+	   open(unit=iunit1,file=filename1,access='direct',recl=nlrec1)
+	   k=kbox(ibox,k1)
+	   do j1=1,nlb(ibox)
+	   j=nyb(ibox)-nlb(ibox)/2+j1
+	   if(j.le.0)j=j+ny
+	   if(j.gt.ny)j=j-ny
+	   do i1=1,nlb(ibox)
+	     i=nxb(ibox)-nlb(ibox)/2+i1
+	     if(i.le.0)i=i+nx
+	     if(i.gt.nx)i=i-nx
+	     irec=i1+(j1-1)*nlb(ibox)+(k1-1)*nlb(ibox)*nlb(ibox)+1
+	     vaux1=real(rho3d(i,j,k))
+	     vaux2=real(ttt(i,j,k))
+	     vaux3=real(vx3d(i,j,k)*vnor)
+	     vaux4=real(vy3d(i,j,k)*vnor)
+	     vaux5=real(vz3d(i,j,k)*vnor)
+	     vaux6=real(rhodm3d(i,j,k))
+	     write(iunit1,rec=irec)vaux1,vaux2,vaux3,vaux4,vaux5,vaux6
+	   enddo
+	   enddo
+	   close(iunit1)
+	  endif
+	enddo
+!
+	enddo
+#ifdef USEMPI
+	CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+!
+END SUBROUTINE outbox

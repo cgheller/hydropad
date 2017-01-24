@@ -1,0 +1,15 @@
+MODULE mpi_inc
+!
+	SAVE
+!
+#ifdef USEMPI
+	INCLUDE 'mpif.h'
+#endif
+!
+	INTEGER :: ierr,npes
+!
+#ifdef USEMPI
+	INTEGER :: status(MPI_STATUS_SIZE)
+#endif
+!
+END MODULE mpi_inc

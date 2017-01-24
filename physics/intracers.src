@@ -1,0 +1,39 @@
+
+#include "hydrompi.def"
+
+SUBROUTINE intracers
+
+        USE dimension
+        USE matrix
+        USE vector
+        USE scalar
+        USE mpi_inc
+        USE profile
+        USE tracers_mod
+        CHARACTER*24 :: filename
+	CHARACTER*1 ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8
+	INTEGER nlrec1,i,j
+	REAL(KIND=8) :: xaux,yaux,zaux
+#ifdef MPI2
+
+        call getindex10000(nstep-1,ch1,ch2,ch3,ch7,ch8)
+	nlrec1=24
+
+	!loop sui cluster
+	do i=1,ntcluster
+		call getindex(i,ch4,ch5,ch6)
+		filename='tracerdump.'//ch1//ch2//ch3//ch7//ch8//'.'&
+                        //ch4//ch5//ch6//'.pff'
+		open(unit=111,file=filename,access='direct',recl=nlrec1)
+		!loop sulle particelle
+	        do j=1,ntrackers(i)
+			read(111,rec=j)xaux,yaux,zaux
+			xtrack0(j,i)=xaux
+			ytrack0(j,i)=yaux
+			ztrack0(j,i)=zaux
+		enddo
+		close(111)
+	enddo
+#endif
+
+END SUBROUTINE intracers
