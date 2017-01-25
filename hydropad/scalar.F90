@@ -1,6 +1,6 @@
 MODULE scalar
 !
-USE dimension
+!USE dimension
 IMPLICIT NONE
 SAVE
 !

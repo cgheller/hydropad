@@ -20,7 +20,7 @@ LOGICAL :: smalltiles
 !
 smalltiles = .false.
 
-if(smalltiles .EQ. .false.)then
+if(smalltiles .EQV. .false.)then
 !
 ! Exchange data to build ghost regions
 !

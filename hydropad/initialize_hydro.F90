@@ -154,8 +154,8 @@ do k=nbound+1,nz-nbound
     igridy = starty+j
     igridz = startz+k
     !if(igridx < ngridx/2 .AND. igridy < ngridy/2 .AND. igridz < ngridz/2)then
-    if(igridx+igridy+igridz < ngridx+2)then
-    !if(igridx+igridy < ngridx+1)then
+    !if(igridx+igridy+igridz < ngridx+2)then
+    if(igridx+igridy < ngridx+1)then
       rho3d(i,j,k) = 1.0
       p3d(i,j,k) = 1.0
       vx3d(i,j,k) = 0.0

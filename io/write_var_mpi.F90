@@ -1,12 +1,12 @@
-SUBROUTINE write_var_mpi(auxvar,nx,ny,nz,filename,mype)
+SUBROUTINE write_var_mpi(auxvar,nx0,ny0,nz0,filename,mype)
 !
 ! update ghost regions
 !
 USE dimension
 USE mpi_inc
 IMPLICIT NONE
-INTEGER :: nx,ny,nz
-REAL(KIND=8), DIMENSION(nx,ny,nz) :: auxvar
+INTEGER :: nx0,ny0,nz0
+REAL(KIND=8), DIMENSION(nx0,ny0,nz0) :: auxvar
 REAL(KIND=4), ALLOCATABLE, DIMENSION(:,:,:) :: writevar
 INTEGER, ALLOCATABLE, DIMENSION(:) :: sizes
 INTEGER, ALLOCATABLE, DIMENSION(:) :: subsizes

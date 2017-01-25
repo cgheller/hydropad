@@ -25,9 +25,9 @@ do i = 0,npes-1
  if (i .EQ. mype)then
    OPEN(UNIT=500,FILE="input.nml",STATUS="old")
    READ(500,NML=MESH)
-   #ifdef USEMPI
+#ifdef USEMPI
    READ(500,NML=MPI)
-   #endif
+#endif
    READ(500,NML=TIME)
    READ(500,NML=IO)
 

@@ -53,6 +53,6 @@ do k=nbound+1,nz-nbound
 enddo
 !CLA
 nes3d=1.0
-cho3d=1.0
+!cho3d=1.0
 !
 END SUBROUTINE shsearch

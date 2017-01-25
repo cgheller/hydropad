@@ -1,6 +1,6 @@
 MODULE vector
 !
-USE dimension
+!USE dimension
 IMPLICIT NONE
 SAVE
 !

@@ -137,8 +137,8 @@ SUBROUTINE indata(startdump)
 	cour=0.9
 	ca=0.020
 	eta1=0.3
-!	eta2=0.005
-	eta2=0.020
+	eta2=0.005
+!	eta2=0.020
 	dmax=2.0e10
 	boltz=1.380658e-16
 	mh=1.6605e-24

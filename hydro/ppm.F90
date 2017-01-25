@@ -1,4 +1,4 @@
-SUBROUTINE ppm(nbound)
+SUBROUTINE ppm(nbound0)
 !
 USE dimension
 USE vector
@@ -9,7 +9,7 @@ USE scalar
 IMPLICIT NONE
 INTEGER, PARAMETER :: n=1
 INTEGER :: i,j,k
-INTEGER :: nmax,nmin,nguess,index,ndir,nbound
+INTEGER :: nmax,nmin,nguess,index,ndir,nbound0
 REAL*8  :: pnew(ngrid),rhonew(ngrid),vxnew(ngrid)
 REAL*8  :: vynew(ngrid),vznew(ngrid),etotnew(ngrid)
 REAL*8  :: eintnew(ngrid)
@@ -50,6 +50,7 @@ common/a6/rho6,p6,vx6,vy6,vz6,c6,g6
 common/newton/pleft,pright,rholeft,rhoright,vxleft,vxright
 common/pippo/nguess
 !
+!CLA
 flt=0.0
 dadt=1.0-0.5*dat*dt*rat
 mmmax=0.0
@@ -57,8 +58,8 @@ flat = flt(1)
 call boundary(flat)
 !
 ! nmin and nmax define the actual integration domain
-nmin=nbound
-nmax=ngrid-nbound
+nmin=nbound0
+nmax=ngrid-nbound0
 !
 ! initialize local variables
 !
@@ -78,7 +79,6 @@ do i=nmin,nmax
 ! flatttt
 flat=flt(i+1)
 !CLA
-!flat=0.0
 ghalf=0.0
 
    do j=1,4
@@ -536,13 +536,13 @@ ghalf=0.0
 ! Eint >
    pmean=(pm(1)+pm(2))*0.5
    if(rhobar(2).gt.dmax*rhobar(1).and.&
-              rhobar(2).gt.dmax*rhobar(3))then
-                if(cho(index).eq.1.0)then
-                  maxp=(vxm(1)-vxm(2))*rhobar(2)*max(mmmax,vxm(1)-vxm(2))
-                  pmean=max(pmean,maxp)
-                else if(cho(index).eq.2.0)then
-                  pmean=(gamma-1.0)*eint(index)
-                endif
+      rhobar(2).gt.dmax*rhobar(3))then
+            if(cho(index).eq.1.0)then
+               maxp=(vxm(1)-vxm(2))*rhobar(2)*max(mmmax,vxm(1)-vxm(2))
+               pmean=max(pmean,maxp)
+            else if(cho(index).eq.2.0)then
+               pmean=(gamma-1.0)*eint(index)
+            endif
    endif
    eintnew(index)=eint(index)+rdtath*pmean*(vxm(1)-vxm(2))*rdx
    flux(1)=(pm(1)*vxm(1))*rgamma1
@@ -552,9 +552,9 @@ ghalf=0.0
          eintnew(index)=eint(index)
    endif
 !CLA this should be removed when nes is reactivated
-   vvv=vxnew(index)**2+vynew(index)**2+vznew(index)**2
-   eintnew(index)=etotnew(index)-0.50*rhonew(index)*vvv
-   pnew(index)=(gamma-1)*eintnew(index)
+!   vvv=vxnew(index)**2+vynew(index)**2+vznew(index)**2
+!   eintnew(index)=etotnew(index)-0.50*rhonew(index)*vvv
+!   pnew(index)=(gamma-1)*eintnew(index)
 
 !
 ! end of the main loop
