@@ -1,0 +1,9 @@
+# Compiled Object files
+*.o
+
+# executables
+hydropad.*
+
+# modules
+*.mod
+

@@ -41,7 +41,7 @@ enddo
       sj=-1
    endif
 !
-   call rflat(ft,j,sj,pbar,ebar,rhobar,vxbar,cbar,0)
+   call rflat(ft,j,sj,pbar,ebar,rhobar,vxbar,cbar,0,ngrid)
 !
 ! j=4+sj is the central zone
 !
@@ -54,7 +54,7 @@ enddo
    else
       sj1=-1
    endif
-   call rflat(fts,j,sj1,pbar,ebar,rhobar,vxbar,cbar,1)
+   call rflat(fts,j,sj1,pbar,ebar,rhobar,vxbar,cbar,1,ngrid)
 5         continue
    flt(i)=max(ft,fts)
 10        continue
@@ -91,7 +91,7 @@ do i=2+nbound,ngrid-nbound
       sj=-1
    endif
 !
-   call rflat(ft,j,sj,pbar,ebar,rhobar,vxbar,cbar,0)
+   call rflat(ft,j,sj,pbar,ebar,rhobar,vxbar,cbar,0,ngrid)
 !
 ! j=4+sj is the central zone
 !
@@ -104,7 +104,7 @@ do i=2+nbound,ngrid-nbound
    else
       sj1=-1
    endif
-   call rflat(fts,j,sj1,pbar,ebar,rhobar,vxbar,cbar,1)
+   call rflat(fts,j,sj1,pbar,ebar,rhobar,vxbar,cbar,1,ngrid)
 50        continue
    flt(i)=max(ft,fts)
 100       continue
@@ -116,14 +116,13 @@ end
 !******************************************************************
 !******************************************************************
 !
-SUBROUTINE rflat(f,j,sj,pbar,ebar,rhobar,vxbar,cbar,icont)
+SUBROUTINE rflat(f,j,sj,pbar,ebar,rhobar,vxbar,cbar,icont,ngrid)
 !
-USE dimension
 USE vector
 USE scalar
 !
 IMPLICIT NONE
-INTEGER sj,icont,i,j
+INTEGER sj,icont,i,j,ngrid
 REAL*8 mmmax
 REAL*8 pbar(7),rhobar(7),vxbar(7),cbar(7),ebar(7)
 REAL*8 pgrad,egrad,omegatd,sigmatd,omega_loc
@@ -172,14 +171,13 @@ END SUBROUTINE rflat
 !*****************************************************************
 !*****************************************************************
 !
-SUBROUTINE nudet
+SUBROUTINE nudet(ngrid)
 !
-USE dimension
 USE vector
 USE scalar
 !
 IMPLICIT NONE
-INTEGER :: i,j,k
+INTEGER :: i,j,k,ngrid
 REAL*8, DIMENSION (:), ALLOCATABLE :: nut
 REAL*8 :: nu1,nu2,nu3,du,s,nutmax,nuconf,mmmax
 !

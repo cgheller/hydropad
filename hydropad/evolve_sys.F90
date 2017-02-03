@@ -18,9 +18,10 @@ USE tracers_mod
 !
 ! local variables
 !
-real*8 tm1,tm2,tm3,pmax1,pmax2,pmax3
-real*8 ti,tf
-INTEGER startdump,dump
+REAL(KIND=8) :: tm1,tm2,tm3,pmax1,pmax2,pmax3
+REAL(KIND=8) ::  ti,tf
+INTEGER :: startdump,dump
+INTEGER :: i,j,k
 !
 ! calculate the DM density field, the gravitational potential and forces
 ! at the beginning of the step - move dark matter particles

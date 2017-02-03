@@ -40,8 +40,8 @@ CASE (1)
               nes(i)=nes3d(i,j,k)
               c(i)=sqrt(gamma*p3d(i,j,k)/rho3d(i,j,k))
             enddo
-            call flattening(ngrid,nbound)
-            call ppm(nbound)
+!            call flattening(ngrid,nbound)
+            call ppm(ngrid,nbound)
             do i=1,nx
               p3dnew(i,j,k)=pres(i)
               rho3dnew(i,j,k)=rho(i)
@@ -72,8 +72,8 @@ CASE (2)
               nes(i)=nes3d(j,i,k)
               c(i)=sqrt(gamma*p3d(j,i,k)/rho3d(j,i,k))
             enddo
-            call flattening(ngrid,nbound)
-            call ppm(nbound)
+!            call flattening(ngrid,nbound)
+            call ppm(ngrid,nbound)
             do i=1,ny
               p3dnew(j,i,k)=pres(i)
               rho3dnew(j,i,k)=rho(i)
@@ -104,8 +104,8 @@ CASE (3)
               nes(i)=nes3d(k,j,i)
               c(i)=sqrt(gamma*p3d(k,j,i)/rho3d(k,j,i))
             enddo
-            call flattening(ngrid,nbound)
-            call ppm(nbound)
+!            call flattening(ngrid,nbound)
+            call ppm(ngrid,nbound)
             do i=1,nz
               p3dnew(k,j,i)=pres(i)
               rho3dnew(k,j,i)=rho(i)

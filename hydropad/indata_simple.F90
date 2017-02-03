@@ -55,8 +55,11 @@ omega0=omega_tot
 !
 cour=0.5
 ca=0.020
-eta1=0.3
-eta2=0.005
+eta1 = 1e-3
+eta2 = 0.1
+! shsearch
+!!eta1=0.3
+!!eta2=0.005
 !eta2=0.020
 dmax=2.0e10
 boltz=1.380658e-16

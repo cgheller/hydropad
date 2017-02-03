@@ -1,6 +1,6 @@
-SUBROUTINE ppm(nbound0)
+SUBROUTINE ppm(ngrid,nbound0)
 !
-USE dimension
+!USE dimension
 USE vector
 USE scalar
 !
@@ -8,7 +8,7 @@ USE scalar
 !
 IMPLICIT NONE
 INTEGER, PARAMETER :: n=1
-INTEGER :: i,j,k
+INTEGER :: i,j,k,ngrid
 INTEGER :: nmax,nmin,nguess,index,ndir,nbound0
 REAL*8  :: pnew(ngrid),rhonew(ngrid),vxnew(ngrid)
 REAL*8  :: vynew(ngrid),vznew(ngrid),etotnew(ngrid)
@@ -41,6 +41,7 @@ REAL*8  :: rarwave,rhoshock1,rhoshock2,vshock1,vshock2,rhoshock
 REAL*8  :: vtail1,vtail2,vhead1,vhead2,rhocont1,rhocont2,vtleft
 REAL*8  :: vtright,zeta
 REAL*8  :: maxp,pmean
+REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
 !
 common/bound/pbar,rhobar,vxbar,vybar,vzbar,gbar,cbar
 common/jleft/rhojl,pjl,vxjl,vyjl,vzjl,cjl,gjl
@@ -71,7 +72,6 @@ pm(2)=0.0
 !
 ! start main loop
 !
-10     continue
 do i=nmin,nmax
 !
 ! select the points involved in the computation for the point i 
@@ -564,12 +564,13 @@ enddo
 !
 ! use only internal energy (nes=1) or both total and internal energy (nes=2)
 !
-do i=nmin,nmax
-   pnew(i)=(gamma-1.0)*eintnew(i)
-enddo
+!do i=nmin,nmax
+!   pnew(i)=(gamma-1.0)*eintnew(i)
+!enddo
 !
 ! correction to the internal energy:
 !
+#ifdef SHOCKCORRECTION 
    do i=nmin,nmax
     if(nes(i).eq.2.0)then
          cho(i)=1.0
@@ -583,6 +584,28 @@ enddo
          pnew(i)=(gamma-1)*eintnew(i)
     endif
    enddo
+#else
+   do i=nmin,nmax
+!CLA this introduces differences in parallel results
+      eeleft = etotnew(i-1)
+      if(i .EQ. nmin) eeleft = 0.0
+      ee = etotnew(i)
+      eeright = etotnew(i+1)
+      if(i .EQ. nmax) eeright = 0.0
+      ee2 = max(eeleft, ee, eeright)
+      vvv = vxnew(i)*vxnew(i)+vynew(i)*vynew(i)+vznew(i)*vznew(i)
+      eeaux = etotnew(i)-0.50*rhonew(i)*vvv 
+      ee1 = eeaux/ee2
+      if (ee1 >= eta2) eintnew(i)=eeaux
+       
+      ee0 = eeaux/etotnew(i)
+      if (ee0 >= eta1) then
+         pnew(i) = (gamma-1)*eeaux
+      else
+         pnew(i) = (gamma-1)*eintnew(i)
+      endif   
+   enddo
+#endif
 !
 ! update of the main variables
 !
