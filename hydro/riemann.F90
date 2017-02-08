@@ -30,16 +30,14 @@ SUBROUTINE riemann(pstar,vstar)
 ! 
 	USE dimension
 	USE scalar
+	USE ppm_mod, ONLY: pleft,pright,rholeft,rhoright,vxleft,vxright
 !
 	IMPLICIT NONE
 	INTEGER :: nnewt,nnewtmax
         INTEGER :: i,j,k
 	REAL*8  :: pstar,vstar,vstarl,vstarr,vprimel,vprimer,pstarold
 	REAL*8  :: err,terr,kappa,cleft,cright,a,b,pcheck
-	REAL*8  :: pleft,pright,rholeft
-        REAL*8  :: rhoright,vxleft,vxright,pstup
-!
-        common/newton/pleft,pright,rholeft,rhoright,vxleft,vxright
+        REAL*8  :: pstup
 !
 ! set error parameters
 !

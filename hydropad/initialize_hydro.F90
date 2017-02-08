@@ -22,14 +22,13 @@ INTEGER, ALLOCATABLE, DIMENSION(:) :: coordinates
 INTEGER :: igrid
 INTEGER :: igridx,igridy,igridz
 !
-dth=0.5*dt
 t0h0=0.66666666667
 !
 ! initialize time parameters
 !
 tin=0.0
 told=tin
-dt=0.01
+dt=0.00001
 dth=0.5*dt
 dtold=dt
 t=tin+dt

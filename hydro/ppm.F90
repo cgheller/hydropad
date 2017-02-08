@@ -3,33 +3,23 @@ SUBROUTINE ppm(ngrid,nbound0)
 !USE dimension
 USE vector
 USE scalar
+USE ppm_mod
 !
 ! local variables
 !
 IMPLICIT NONE
 INTEGER, PARAMETER :: n=1
 INTEGER :: i,j,k,ngrid
-INTEGER :: nmax,nmin,nguess,index,ndir,nbound0
+INTEGER :: nmax,nmin,index,ndir,nbound0
 REAL*8  :: pnew(ngrid),rhonew(ngrid),vxnew(ngrid)
 REAL*8  :: vynew(ngrid),vznew(ngrid),etotnew(ngrid)
 REAL*8  :: eintnew(ngrid)
-REAL*8  :: rhobar(5),pbar(5),vxbar(5),vybar(5)
-REAL*8  :: vzbar(5),gbar(5)
-REAL*8  :: rhojl(2),pjl(2),vxjl(2),vyjl(2),vzjl(2)
-REAL*8  :: cjl(2),gjl(2)
-REAL*8  :: rhojr(2),pjr(2),vxjr(2),vyjr(2),vzjr(2)
-REAL*8  :: cjr(2),gjr(2)
-REAL*8  :: deltarho(2),deltap(2),deltavx(2),deltavy(2)
-REAL*8  :: deltavz(2),deltac(2),deltag(2)
-REAL*8  :: rho6(2),p6(2),vx6(2),vy6(2),vz6(2)
-REAL*8  :: c6(2),g6(2)
-REAL*8  :: cbar(2),flux(2)
+REAL*8  :: flux(2)
 REAL*8  :: pcl(3),pcr(3),rhocl(3),rhocr(3),vxcl(3),vxcr(3)
 REAL*8  :: vycl(3),vycr(3),vzcl(3),vzcr(3),gcl(3),gcr(3)
 REAL*8  :: pm(2),rhom(2),vxm(2),vym(2),vzm(2)
 REAL*8  :: ptl,ptr,rhotl,rhotr,vxtl,vxtr,vytl,vytr
 REAL*8  :: vztl,vztr,ctl,ctr,gtl,gtr
-REAL*8  :: pleft,pright,rholeft,rhoright,vxleft,vxright
 REAL*8  :: vyleft,vyright,vzleft,vzright,cleft,cright
 REAL*8  :: beta,beta0,ee1,ee2,betax
 REAL*8  :: betaml,beta0l,betapl,betamr,beta0r,betapr
@@ -42,14 +32,6 @@ REAL*8  :: vtail1,vtail2,vhead1,vhead2,rhocont1,rhocont2,vtleft
 REAL*8  :: vtright,zeta
 REAL*8  :: maxp,pmean
 REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
-!
-common/bound/pbar,rhobar,vxbar,vybar,vzbar,gbar,cbar
-common/jleft/rhojl,pjl,vxjl,vyjl,vzjl,cjl,gjl
-common/jright/rhojr,pjr,vxjr,vyjr,vzjr,cjr,gjr
-common/delta/deltarho,deltap,deltavx,deltavy,deltavz,deltac,deltag
-common/a6/rho6,p6,vx6,vy6,vz6,c6,g6
-common/newton/pleft,pright,rholeft,rhoright,vxleft,vxright
-common/pippo/nguess
 !
 !CLA
 flt=0.0
@@ -603,6 +585,7 @@ enddo
          pnew(i) = (gamma-1)*eeaux
       else
          pnew(i) = (gamma-1)*eintnew(i)
+         !write(*,*)"Correcting with internal energy!!!!!!!!!!!!!!!"
       endif   
    enddo
 #endif

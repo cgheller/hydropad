@@ -13,5 +13,6 @@ REAL*8, DIMENSION(:), ALLOCATABLE :: pres,rho,vx,vy,ghalf
 REAL*8, DIMENSION(:), ALLOCATABLE :: vz,g,c,eint,etot
 REAL*8, DIMENSION(:), ALLOCATABLE :: rhoold1d,vxold1d,phi1,phi0
 REAL*8, DIMENSION(:), ALLOCATABLE :: flt,nu,sk2
+!$OMP THREADPRIVATE(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
 !
 END MODULE vector

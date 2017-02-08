@@ -1,3 +1,4 @@
+COMPILER = PGI
 EXEC = hydropad
 DEFINES = -DUSEMPI -DTRACE
 DEFACC = 
@@ -6,7 +7,7 @@ RM = /bin/rm
 # Use MPI? [yes|no]
 USEMPI = yes
 # Use host OpenMP? [yes|no]
-USEOMP = no
+USEOMP = yes
 # Use OpenACC? [yes|no]
 USEACC = no
 
@@ -19,9 +20,20 @@ PROFILE = no
 F90 = ftn
 FFLAGS = -O3 -c
 CC = CC
-DEBUG = -g
+DEBUG = 
 LD = ftn
 LFLAGS = 
+
+ifeq ($(USEOMP),yes)
+  ifeq ($(COMPILER),GNU)
+    FFLAGS += -fopenmp
+    LFLAGS += -fopenmp
+  endif
+  ifeq ($(COMPILER),PGI)
+    FFLAGS += -mp
+    LFLAGS += -mp
+  endif
+endif
 
 #If debugging mode, else comment it out
 #FFLAGS += -g
@@ -49,7 +61,7 @@ IPAPATH =
 #############################################################################
 # Objects
 # Modules
-MODS = mpi_inc.o dimension.o scalar.o vector.o matrix.o io_mod.o
+MODS = mpi_inc.o dimension.o scalar.o vector.o matrix.o io_mod.o ppm_mod.o
 # Driver
 MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o indata_simple.o initialize_hydro.o alloc_arrays.o dealloc_vectors.o alloc_vectors.o savetn.o savetnp1.o expand.o calculate_thermo.o speed.o functions.o means.o exchange_mesh.o exchange_var.o shsearch.o
 # I/O

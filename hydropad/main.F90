@@ -101,7 +101,6 @@ do while(nstep.lt.maxsteps)
 ! system evolution
 !
   CALL evolve_sys
-  write(*,*)maxval(rho3d),minval(rho3d)
 !
 #ifdef USEMPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)

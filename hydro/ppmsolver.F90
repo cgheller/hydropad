@@ -7,11 +7,13 @@ SUBROUTINE ppmsolver(p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d, &
 
 USE vector
 USE scalar
+USE ppm_mod
 !
 IMPLICIT NONE
 INTEGER :: nx, ny, nz, ndirection
 REAL(KIND=8), DIMENSION(nx,ny,nz), INTENT(IN) :: p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d
 REAL(KIND=8), DIMENSION(nx,ny,nz), INTENT(OUT) :: p3dnew, rho3dnew, vx3dnew, vy3dnew, vz3dnew, cho3dnew
+INTEGER :: OMP_GET_THREAD_NUM,OMP_GET_NUM_THREADS
 !
 INTEGER :: nbound,ngrid
 !
@@ -25,7 +27,12 @@ SELECT CASE (ndirection)
 CASE (1)
         write(*,*)"Integrating along x"
         ngrid = nx
+!$OMP PARALLEL
+        write(*,*)"Number of running threads: ",OMP_GET_NUM_THREADS(),OMP_GET_THREAD_NUM()
         call alloc_vectors(ngrid)
+!$OMP END PARALLEL
+!$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
         do k=nbound+1,nz-nbound
           do j=nbound+1,ny-nbound
             do i=1,nx
@@ -52,6 +59,7 @@ CASE (1)
             enddo
           enddo
         enddo
+!!$OMP end parallel do
         call dealloc_vectors
 ! Integration in the y direction
 CASE (2)
