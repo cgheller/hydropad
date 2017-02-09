@@ -65,7 +65,11 @@ CASE (1)
 CASE (2)
         write(*,*)"Integrating along y"
         ngrid = ny
+!$OMP PARALLEL
         call alloc_vectors(ngrid)
+!$OMP END PARALLEL
+!$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
         do k=nbound+1,nz-nbound
           do j=nbound+1,nx-nbound
             do i=1,ny
@@ -97,7 +101,11 @@ CASE (2)
 CASE (3)
         write(*,*)"Integrating along z"
         ngrid = nz
+!$OMP PARALLEL
         call alloc_vectors(ngrid)
+!$OMP END PARALLEL
+!$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
         do k=nbound+1,nx-nbound
           do j=nbound+1,ny-nbound
             do i=1,nz
