@@ -105,7 +105,6 @@ CASE (2)
         nmin = 3
         nmax = 5
 #endif
-
 !$OMP PARALLEL
         call alloc_vectors(ngrid)
 !$OMP END PARALLEL
