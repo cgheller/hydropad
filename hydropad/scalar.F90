@@ -90,4 +90,7 @@ REAL*8 :: ntotsn
 real*8 :: zpreheating, temppreheating
 real*8 :: enzoactive
 !
+! flattening parameters
+!
+REAL(KIND=8) :: mingradflat,flatvalue
 END MODULE scalar

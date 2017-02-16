@@ -1,4 +1,4 @@
-SUBROUTINE ppm(ngrid,nbound0)
+SUBROUTINE ppm(ngrid,nbound0,nmin,nmax,cellid)
 !
 !USE dimension
 USE vector
@@ -9,8 +9,8 @@ USE ppm_mod
 !
 IMPLICIT NONE
 INTEGER, PARAMETER :: n=1
-INTEGER :: i,j,k,ngrid
-INTEGER :: nmax,nmin,index,ndir,nbound0
+INTEGER :: i,j,k,ngrid,icell,icellaux,cellid,cellidaux,flatyn
+INTEGER :: nmax,nmin,nmid,index,ndir,nbound0
 REAL*8  :: pnew(ngrid),rhonew(ngrid),vxnew(ngrid)
 REAL*8  :: vynew(ngrid),vznew(ngrid),etotnew(ngrid)
 REAL*8  :: eintnew(ngrid)
@@ -34,16 +34,14 @@ REAL*8  :: maxp,pmean
 REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
 !
 !CLA
-flt=0.0
 dadt=1.0-0.5*dat*dt*rat
 mmmax=0.0
-flat = flt(1)
-call boundary(flat)
+!#ifndef STENCIL
+!flat=flt(3)
+!call boundary(flat)
+!#endif
 !
-! nmin and nmax define the actual integration domain
-nmin=nbound0
-nmax=ngrid-nbound0
-!
+! nmin and nmax define the actual integration domain: input parameters
 ! initialize local variables
 !
 rhom(2)=0.0
@@ -55,32 +53,51 @@ pm(2)=0.0
 ! start main loop
 !
 do i=nmin,nmax
+   flatyn=0
+   flat=0.0
+   icell = i
+   cellidaux = i
+#ifdef STENCIL
+   cellidaux = cellid
+#endif
 !
 ! select the points involved in the computation for the point i 
 !
-! flatttt
-flat=flt(i+1)
 !CLA
-ghalf=0.0
+   ghalf=0.0
+!CLA
 
-   do j=1,4
-      pbar(j)=pbar(j+1)
-      rhobar(j)=rhobar(j+1)
-      gbar(j)=gbar(j+1)
-      vxbar(j)=vxbar(j+1)
-      vybar(j)=vybar(j+1)
-      vzbar(j)=vzbar(j+1)
-   enddo 
-      pbar(5)=pres(i+3)
-      rhobar(5)=rho(i+3)
-      gbar(5)=g(i+3)
-      vxbar(5)=vx(i+3)
-      vybar(5)=vy(i+3)
-      vzbar(5)=vz(i+3)
-      cbar(1)=cbar(2)
-!CLA--------> check here
-      cbar(2)=c(i+1)
-      gbar = 0.0
+   do j=1,5
+      icellaux=icell+j-3
+      pbar(j)  = pres(icellaux)
+      rhobar(j)= rho(icellaux)
+      gbar(j)  = g(icellaux)
+      vxbar(j) = vx(icellaux)
+      vybar(j) = vy(icellaux)
+      vzbar(j) = vz(icellaux)
+   enddo
+   cbar(1)  = c(icell)
+   cbar(2)  = c(icell+1)
+   gbar = 0.0
+!CLA
+   !write(*,*)i,icell
+   !write(*,'(e13.7)')pbar
+!
+! calculate flattening parameter
+!
+   CALL flatten5(pbar,flatyn,5)
+   if(flatyn == 1)flat=flatvalue
+   CALL flatten5(rhobar,flatyn,5)
+   if(flatyn == 1)flat=flatvalue
+   CALL flatten5(vxbar,flatyn,5)
+   if(flatyn == 1)flat=flatvalue
+   CALL flatten5(vybar,flatyn,5)
+   if(flatyn == 1)flat=flatvalue
+   CALL flatten5(vzbar,flatyn,5)
+   if(flatyn == 1)flat=flatvalue
+   !CALL flattening(flat,ngrid)
+   !if(flat > 0.0)write(*,*)icell,flat
+   !flat=0.15
 !
 ! compute left and right limits of the hydro functions for the
 ! i-zone
@@ -214,6 +231,8 @@ ghalf=0.0
       vzright=vzcr(2)
    endif
 
+   IF (i.eq.nmin) CYCLE
+
    pleft=ptl+ctl*ctl*(betapl+betaml)
    if(pleft.le.0.0)pleft=ptl
    pright=ptr+ctr*ctr*(betapr+betamr)
@@ -259,6 +278,7 @@ ghalf=0.0
    vxm(1)=vxm(2)
    vym(1)=vym(2)
    vzm(1)=vzm(2)
+   !write(*,*)i,rhom(1),rhom(2)
 !
 ! for (i+1/2) :
 ! 1 > two shocks
@@ -288,17 +308,17 @@ ghalf=0.0
 ! solve Riemann problem:
 !
       if(vshock2.lt.0.0)then
-	 pm(2)=pright
-	 vxm(2)=vxright
-	 rhom(2)=rhoright
+         pm(2)=pright
+         vxm(2)=vxright
+         rhom(2)=rhoright
       else if(vxm(2).le.0.0.and.vshock2.ge.0.0)then
-	 rhom(2)=rhoshock2
+         rhom(2)=rhoshock2
       else if(vshock1.le.0.0.and.vxm(2).gt.0.0)then
-	 rhom(2)=rhoshock1
+         rhom(2)=rhoshock1
       else
-	 pm(2)=pleft
-	 vxm(2)=vxleft
-	 rhom(2)=rholeft
+         pm(2)=pleft
+         vxm(2)=vxleft
+         rhom(2)=rholeft
       endif
 !
 ! 2 > one shock and one rarefaction wave
@@ -467,9 +487,6 @@ ghalf=0.0
       vzm(2)=dadt*vzright
    endif
 !
-   if(i.eq.1) goto 1333
- 150       continue
-!
 ! correct pressure on very high density peaks
 !
    if(rhobar(2).gt.dmax*rhobar(1).and.&
@@ -480,14 +497,26 @@ ghalf=0.0
                   pm(2)=max(pm(2),maxp)
    endif
 !
+!CLA
+
+   nmid=nmin+1
+   IF (i.eq.nmid) CYCLE
+   !write(*,*)icell
+   !write(*,*)pm(1),rhom(1),vxm(1)
+   !write(*,*)pm(2),rhom(2),vxm(2)
+!
 ! solve the hydro equations for rho, vx, vy, vz, p (note that
 ! for the variable flux 1=i-(1/2), 2=i+(1/2)):
 ! rho >
 !
-   index=i
+   index=icell-1
+!
    flux(1)=rhom(1)*vxm(1)
    flux(2)=rhom(2)*vxm(2)
    rhonew(index)=rho(index)+rdtath*(flux(1)-flux(2))*rdx
+   !write(*,*)index,icell
+   !write(*,*)flux(1),flux(2),rhonew(index)
+   !write(*,*)"--------------------------"
 ! vx >
    vxold1=vx(index)
    flux(1)=rhom(1)*vxm(1)*vxm(1)+pm(1)
@@ -533,41 +562,18 @@ ghalf=0.0
    if(eintnew(index).lt.0)then
          eintnew(index)=eint(index)
    endif
-!CLA this should be removed when nes is reactivated
-!   vvv=vxnew(index)**2+vynew(index)**2+vznew(index)**2
-!   eintnew(index)=etotnew(index)-0.50*rhonew(index)*vvv
-!   pnew(index)=(gamma-1)*eintnew(index)
-
 !
 ! end of the main loop
 !
- 1333      continue
 enddo
 !
-! use only internal energy (nes=1) or both total and internal energy (nes=2)
+! use only internal energy or both total and internal energy 
 !
-!do i=nmin,nmax
-!   pnew(i)=(gamma-1.0)*eintnew(i)
-!enddo
-!
-! correction to the internal energy:
-!
-#ifdef SHOCKCORRECTION 
+#ifndef STENCIL
    do i=nmin,nmax
-    if(nes(i).eq.2.0)then
-         cho(i)=1.0
-         vvv=vxnew(i)*vxnew(i)+vynew(i)*vynew(i)+vznew(i)*vznew(i)
-         ee2=max(etotnew(i-1),etotnew(i),etotnew(i+1))
-         ee1=(etotnew(i)-0.50*rhonew(i)*vvv)/ee2
-         if(ee1.gt.eta2)then
-            eintnew(i)=etotnew(i)-0.50*rhonew(i)*vvv
-            cho(i)=2.0
-         endif
-         pnew(i)=(gamma-1)*eintnew(i)
-    endif
-   enddo
 #else
-   do i=nmin,nmax
+   i=4
+#endif
 !CLA this introduces differences in parallel results
       eeleft = etotnew(i-1)
       if(i .EQ. nmin) eeleft = 0.0
@@ -575,6 +581,9 @@ enddo
       eeright = etotnew(i+1)
       if(i .EQ. nmax) eeright = 0.0
       ee2 = max(eeleft, ee, eeright)
+#ifdef STENCIL
+      ee2 = ee
+#endif
       vvv = vxnew(i)*vxnew(i)+vynew(i)*vynew(i)+vznew(i)*vznew(i)
       eeaux = etotnew(i)-0.50*rhonew(i)*vvv 
       ee1 = eeaux/ee2
@@ -587,12 +596,17 @@ enddo
          pnew(i) = (gamma-1)*eintnew(i)
          !write(*,*)"Correcting with internal energy!!!!!!!!!!!!!!!"
       endif   
+#ifndef STENCIL
    enddo
 #endif
 !
 ! update of the main variables
 !
-do i=nmin,nmax
+#ifndef STENCIL
+   do i=nmin,nmax
+#else
+   i=4
+#endif
   if(eintnew(i).le.0.0)then
      eintnew(i)=eint(i)
      pnew(i)=pres(i)
@@ -605,6 +619,8 @@ do i=nmin,nmax
   vz(i)=vznew(i)        
   etot(i)=etotnew(i)    
   eint(i)=eintnew(i)
+#ifndef STENCIL
 enddo   
+#endif
 !
 END SUBROUTINE ppm

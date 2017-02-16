@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 
 SUBROUTINE calculate_thermo(tm,pmax0)
 !

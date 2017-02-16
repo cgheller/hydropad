@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 
 SUBROUTINE init_sys
 !
@@ -14,6 +13,7 @@ INTEGER :: i
 NAMELIST/MESH/ngridx,ngridy,ngridz,nbound
 NAMELIST/MPI/npesx,npesy,npesz
 NAMELIST/TIME/maxsteps
+NAMELIST/HYDRO/flatvalue,mingradflat
 NAMELIST/IO/output_pe
 !
 ! Read simulation parameters
@@ -29,6 +29,7 @@ do i = 0,npes-1
    READ(500,NML=MPI)
 #endif
    READ(500,NML=TIME)
+   READ(500,NML=HYDRO)
    READ(500,NML=IO)
 
    CLOSE(500)

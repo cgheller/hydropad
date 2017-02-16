@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 
 SUBROUTINE timedet
 USE dimension
@@ -16,7 +15,7 @@ dtold = dt
 !
 ! Courant condition
 !
-write(*,*)"velmax = ", velmax
+if(mype == 0)write(*,*)"velmax = ", velmax
 rdtc=velmax/(cour*dx)
 if(velmax .EQ. 0.0)then
   dt=0.1

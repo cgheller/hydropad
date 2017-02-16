@@ -1,38 +1,37 @@
-SUBROUTINE flattening(flat,ngrid)
+SUBROUTINE flattening(flat,ngrid,j)
 !
+USE vector
 USE scalar
-USE ppm_mod
 !
 IMPLICIT NONE
-INTEGER :: i,j,k,indexj,indexi,cellid,icont
-INTEGER :: ngrid
-INTEGER :: sj0,sj1
-REAL(KIND=8) :: cbar0(5),ebar(5)
-REAL(KIND=8) :: ft1,fts,flat
-!
-icont=5
-do i = 1,icont
-   ebar(i) = pbar(i)*rgamma1+0.5*rhobar(i)*(vxbar(i)**2+vybar(i)**2+vzbar(i)**2)
-   cbar0(i) = sqrt(gamma*pbar(i)/rhobar(i))
-enddo
-!
-indexj = 3
+INTEGER :: i,j,k,indexj
+INTEGER :: ngrid,nbound
+INTEGER :: sj,sj1
+REAL*8  :: pbar(7),rhobar(7),vxbar(7),vybar(7),vzbar(7)
+REAL*8  :: cbar(7),ebar(7)
+REAL*8  :: ft,fts,flat
+
+! This setting is compulsory!
+indexj = j
+flt=0.0
+sk2=0.0
 ! Calculate sj (1)
    if(pbar(indexj+1)-pbar(indexj-1).lt.0.0)then
-      sj0=1
+      sj=1
    else if(pbar(indexj+1)-pbar(indexj-1).eq.0.0)then
-      ft1=0.0
+      ft=0.0
       goto 100
    else
-      sj0=-1
+      sj=-1
    endif
 !
-   call rflat(ft1,indexj,sj0,ebar,cbar0,icont,ngrid)
+   call rflat(ft,indexj,sj,pbar,ebar,rhobar,vxbar,cbar,0,ngrid)
 100       continue
+#ifdef PIPPO
 !
-! indexj=3+sj is the central zone
+! j=4+sj is the central zone
 !
-   indexj=indexj+sj0
+   indexj=indexj+sj
    if(pbar(indexj+1)-pbar(indexj-1).lt.0.0)then
       sj1=1
    else if(pbar(indexj+1)-pbar(indexj-1).eq.0.0)then
@@ -41,33 +40,33 @@ indexj = 3
    else
       sj1=-1
    endif
-   call rflat(fts,indexj,sj1,ebar,cbar0,icont,ngrid)
+   call rflat(fts,indexj,sj1,pbar,ebar,rhobar,vxbar,cbar,1,ngrid)
 50        continue
-!
 ! Calculate the flattening parameter (2)
+   flat=max(ft,fts)
+#endif
+flat=ft
 !
-flat=max(ft1,fts)
-!
-END SUBROUTINE flattening
+return
+end
 !
 !******************************************************************
 !******************************************************************
 !
-SUBROUTINE rflat(ftildej,jaux,sj,ebar,cbar0,icont,ngrid)
+SUBROUTINE rflat(ftildej,j,sj,pbar,ebar,rhobar,vxbar,cbar,icont,ngrid)
 !
+USE vector
 USE scalar
-USE ppm_mod
 !
 IMPLICIT NONE
-INTEGER :: sj,icont,i,j,ngrid,jaux
+INTEGER :: sj,icont,i,j,ngrid
 REAL(KIND=8) :: mmmax
 REAL(KIND=8) :: essej,nu1,nu2,nu3,WWj
-REAL(KIND=8) :: cbar0(icont),ebar(icont)
+REAL(KIND=8) :: pbar(7),rhobar(7),vxbar(7),cbar(7),ebar(7)
 REAL(KIND=8) :: vgrad,pgrad,egrad,omegatd,sigmatd,omega_loc
 REAL(KIND=8) :: sigmaj,omegajvgrad,wj,ftildej,wej,kappaj,kappatd,omegaj
 REAL(KIND=8) :: sigmatildej,sigma1,sigma2,omegatildej,omega1,omega2,kappatildej,kappa1,kappa2
 !
-j=jaux
 essej = float(sj)
 mmmax = 0.0
 sigma1 = 0.5d0
@@ -92,13 +91,11 @@ endif
 !
 ! Equation A.7
 !
-! ---> this is changed
-sigmatildej = abs(pbar(j+1)-pbar(j-1))/min(pbar(j+1),pbar(j-1))
+sigmatildej = abs(pbar(j+1)-pbar(j-1))/min(pbar(j+2),pbar(j-2))
 sigmaj = max(mmmax,(sigmatildej-sigma1)/(sigmatildej+sigma2))
 !
 ! Equation A.8
 !
-#ifdef PIPPO
 if((pbar(j+2)-pbar(j-2)).eq.0.0)then
     pgrad=0.0
 else
@@ -111,24 +108,19 @@ else
 endif
 omegatildej = max(pgrad,egrad)
 omegaj = max(mmmax,omega1*(omega2-omegatildej))
-#endif
 !
 ! Equation A.9 (check tau = 1/rho?)
 !
-! ---> this is changed
-WWj = sqrt( (max(pbar(j+1),pbar(j-1))+0.50*(gamma-1.0)*&
-         (pbar(j+1)+pbar(j-1)))*min(rhobar(j+1),rhobar(j-1)) )
-! ---> this is changed
-wej=(essej*WWj/rhobar(j-1*sj))+vxbar(j-sj)
+WWj = sqrt( (max(pbar(j+2),pbar(j-2))+0.50*(gamma-1.0)*&
+         (pbar(j+2)+pbar(j-2)))*min(rhobar(j+2),rhobar(j-2)) )
+wej=essej*WWj/(rhobar(j-2*sj)+vxbar(j-2*sj))
 
-! ---> this is changed
-kappatildej = abs((wej-vxbar(j+sj)+essej*cbar0(j+sj))/wej)
+kappatildej = abs((wej-vxbar(j+2*sj)+essej*cbar(j+2*sj))/wej)
 kappaj = max(mmmax,(kappatildej-kappa1)/(kappatildej+kappa2))
 !
 ! flattening parameter
 !
-! ---> this is changed
-ftildej = min(sigmaj*wj,kappaj)
+ftildej = min(omegaj*wj,sigmaj*wj,kappaj)
 !
 END SUBROUTINE rflat
 !

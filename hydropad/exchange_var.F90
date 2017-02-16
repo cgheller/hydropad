@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 !
 SUBROUTINE exchange_var(auxvar,nx,ny,nz,nbound,request,nreq,istart,itag)
 !

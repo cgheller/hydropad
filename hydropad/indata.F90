@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 !       
 SUBROUTINE indata(startdump)
 !

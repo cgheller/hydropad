@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 !
 SUBROUTINE initialize_hydro
 !
@@ -70,17 +69,17 @@ do k=1,nz
   do i=nbound+1,nx-nbound
     igrid = startx+i
     if(igrid < ngridx/2)then
-      rho3d(i,j,k) = 1.0
-      p3d(i,j,k) = 1.0
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 1.0d0
+      p3d(i,j,k) = 1.0d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     else
-      rho3d(i,j,k) = 0.125
-      p3d(i,j,k) = 0.1
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 0.125d0
+      p3d(i,j,k) = 0.1d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     endif
   enddo
  enddo
@@ -95,17 +94,17 @@ do i=1,nx
   do j=nbound+1,ny-nbound
     igrid = startx+j
     if(igrid < ngridy/2)then
-      rho3d(i,j,k) = 1.0
-      p3d(i,j,k) = 1.0
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 1.0d0
+      p3d(i,j,k) = 1.0d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     else
-      rho3d(i,j,k) = 0.125
-      p3d(i,j,k) = 0.1
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 0.125d0
+      p3d(i,j,k) = 0.1d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     endif
   enddo
  enddo
@@ -121,17 +120,17 @@ do i=1,nx
   do k=nbound+1,nz-nbound
     igrid = startx+k
     if(igrid < ngridz/2)then
-      rho3d(i,j,k) = 1.0
-      p3d(i,j,k) = 1.0
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 1.0d0
+      p3d(i,j,k) = 1.0d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     else
-      rho3d(i,j,k) = 0.125
-      p3d(i,j,k) = 0.1
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 0.125d0
+      p3d(i,j,k) = 0.1d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     endif
   enddo
  enddo
@@ -155,17 +154,17 @@ do k=nbound+1,nz-nbound
     !if(igridx < ngridx/2 .AND. igridy < ngridy/2 .AND. igridz < ngridz/2)then
     !if(igridx+igridy+igridz < ngridx+2)then
     if(igridx+igridy < ngridx+1)then
-      rho3d(i,j,k) = 1.0
-      p3d(i,j,k) = 1.0
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 1.0d0
+      p3d(i,j,k) = 1.0d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     else
-      rho3d(i,j,k) = 0.125
-      p3d(i,j,k) = 0.1
-      vx3d(i,j,k) = 0.0
-      vy3d(i,j,k) = 0.0
-      vz3d(i,j,k) = 0.0
+      rho3d(i,j,k) = 0.125d0
+      p3d(i,j,k) = 0.1d0
+      vx3d(i,j,k) = 0.0d0
+      vy3d(i,j,k) = 0.0d0
+      vz3d(i,j,k) = 0.0d0
     endif
   enddo
  enddo
@@ -173,16 +172,16 @@ enddo
 #endif
 
 #ifdef SEDOV
-rho3d = 1.0
-p3d  = 1.0
-vx3d = 0.0
-vy3d = 0.0
-vz3d = 0.0
+rho3d = 1.0d0
+p3d  = 1.0d0
+vx3d = 0.0d0
+vy3d = 0.0d0
+vz3d = 0.0d0
 if(mype .EQ. 0)p3d(nbound+1,nbound+1,nbound+1) = 100000.0
 #endif
 
 #ifdef BOUNDARIES
-rho3d=-1.0
+rho3d=-1.0d0
 do k=1,nz
  do j=1,ny
   do i=1,nx

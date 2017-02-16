@@ -1,0 +1,21 @@
+&MESH
+nbound = 3,
+ngridx = 128,
+ngridy = 128,
+ngridz = 128
+/
+&MPI
+npesx = 2,
+npesy = 2,
+npesz = 2
+/
+&TIME
+maxsteps = 50
+/
+&HYDRO
+flatvalue = 0.15
+mingradflat = 0.25
+/
+&IO
+output_pe = 1
+/

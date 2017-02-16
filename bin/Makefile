@@ -1,13 +1,13 @@
-COMPILER = PGI
+COMPILER = GNU
 EXEC = hydropad
-DEFINES = -DUSEMPI -DTRACE
+DEFINES = -DUSEMPI -DTRACE -DSHOCKXYZ
 DEFACC = 
 RM = /bin/rm
 
 # Use MPI? [yes|no]
 USEMPI = yes
 # Use host OpenMP? [yes|no]
-USEOMP = yes
+USEOMP = no
 # Use OpenACC? [yes|no]
 USEACC = no
 
@@ -18,7 +18,7 @@ LST = no
 PROFILE = no
 
 F90 = ftn
-FFLAGS = -O3 -c
+FFLAGS = -g -O3 -c
 CC = CC
 DEBUG = 
 LD = ftn
@@ -67,7 +67,7 @@ MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o indata_simple.o initializ
 # I/O
 IO = write_var.o write_var_mpi.o
 # Hydro
-HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o dda.o flatten.o ppm_lxlylz.o total.o
+HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o dda.o flatten.o ppm_lxlylz.o total.o flatten5.o
 # Gravity
 GRAVITY =
 # N-body
@@ -92,6 +92,7 @@ HYDROPAD = $(MAIN) $(IO) $(HYDRO) $(GRAVITY) $(NBODY)
 $(EXEC) : $(MODS) $(HYDROPAD)
 	$(LD) $(DEBUG) $(LFLAGS) $(MODS) $(HYDROPAD) -o $(EXEC).MPI$(USEMPI).OMP$(USEOMP).ACC$(USEACC) $(LIBS)
 
+.PHONY : clean
 clean:
 	$(RM) *.o
 	${RM} *.mod

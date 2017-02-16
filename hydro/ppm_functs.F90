@@ -29,7 +29,7 @@ ajl(2)=a(2)+0.50*(a(3)-a(2))+(dmaj-dmajp1)*0.16666667
 ajr(2)=a(3)+0.50*(a(4)-a(3))+(dmajp1-dmajp2)*0.16666667
 if(ndda.eq.1.and.addrho.ge.addp)then
    call dda(a,eta,ajld,ajrd,dmaj,dmajp2)
-!   eta=0.0
+   !eta=0.0
    ajl(2)=(1.0-eta)*ajl(2)+eta*ajld
    ajr(2)=(1.0-eta)*ajr(2)+eta*ajrd
 endif
@@ -43,7 +43,6 @@ else if(deltaa1(2)*a6(2).gt.deltaa1(2)**2)then
 else if(deltaa1(2)*a6(2).lt.(-(deltaa1(2)**2)))then
        ajr(2)=3.0*a(3)-2.0*ajl(2)
 endif
-! flatttt	flat=0.0
 ajl(2)=flat*a(3)+(1.0-flat)*ajl(2)
 ajr(2)=flat*a(3)+(1.0-flat)*ajr(2)
 deltaa1(2)=ajr(2)-ajl(2)

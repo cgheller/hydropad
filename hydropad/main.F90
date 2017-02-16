@@ -1,4 +1,3 @@
-#include "hydrompi.def"
 !	
 ! NB: in this first impementation the 1D size MUST be divisible by the number 
 ! of MPI ranks in that dimension!!!
@@ -32,9 +31,9 @@ mype = 0
 npesx = 1
 npesy = 1
 npesz = 1
-write(*,*)
-write(*,*)'The code is compiled without MPI directives'
-write(*,*)
+if(mype == 0)write(*,*)
+if(mype == 0)write(*,*)'The code is compiled without MPI directives'
+if(mype == 0)write(*,*)
 #endif
 #ifdef USEMPI
 !
@@ -110,36 +109,6 @@ do while(nstep.lt.maxsteps)
 !
 enddo
 !
-! CLA: Do a very stupid I/O
-#ifdef SHOCKX
-k=nz/2
-j=ny/2
-do i = nbound+1,nx-nbound
-  write(500,'(i3,2x,5(e13.7,1x))')i-nbound,rho3d(i,j,k),p3d(i,j,k),vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k)
-enddo
-#endif
-#ifdef SHOCKY
-i=nx/2
-k=nz/2
-!j=ny/2
-do j = nbound+1,ny-nbound
-  write(500,'(i3,2x,5(e13.7,1x))')j-nbound,rho3d(i,j,k),p3d(i,j,k),vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k)
-enddo
-#endif
-#ifdef SHOCKZ
-i=nx/2
-j=ny/2
-do k = nbound+1,nz-nbound
-  write(500,'(i3,2x,5(e13.7,1x))')k-nbound,rho3d(i,j,k),p3d(i,j,k),vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k)
-enddo
-#endif
-#ifdef SEDOV
-k=nz/2
-j=ny/2
-do i = nbound+1,nx-nbound
-  write(500,'(i3,2x,5(e13.7,1x))')i-nbound,rho3d(i,j,k),p3d(i,j,k),vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k)
-enddo
-#endif
 
 variablefilename="rho.bin"
 call write_var_mpi(rho3d,nx,ny,nz,variablefilename,mype)
