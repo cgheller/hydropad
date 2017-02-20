@@ -12,7 +12,7 @@ CHARACTER(len=30)variablefilename
 integer :: maxsteps
 integer :: nstep,npl
 integer :: ifail
-real*8 :: dt,t,told,at,dat,ath,dtold,dath,dth
+real*8 :: dt,t,told,at,dat,ath,dtold,dath,dth,dtinit
 real*8 :: rdtath,redshift,redshiftold,tin,tstop
 real*8 :: tstop_aux,atnew,datnew,thalf,rat,ca
 real*8 :: tout(9)
@@ -93,4 +93,6 @@ real*8 :: enzoactive
 ! flattening parameters
 !
 REAL(KIND=8) :: mingradflat,flatvalue
+!$acc declare copyin(mingradflat,flatvalue,gamma,rat,m,rgamma1,rm,rgamma,dmax,rdx,rdtath,dt,dx,dat,at,&
+!$acc &              gamma1,gf,eta1,eta2)
 END MODULE scalar

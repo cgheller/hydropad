@@ -1,14 +1,35 @@
-SUBROUTINE ppm(ngrid,nbound0,nmin,nmax,cellid)
+SUBROUTINE ppm(ngrid,nbound0,nmin,nmax,cellid,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+               rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
 !
 !USE dimension
-USE vector
+!USE vector
 USE scalar
-USE ppm_mod
+!$acc routine seq
+!$acc routine (flatten5) seq
+!$acc routine (correction) seq
+!$acc routine (riemann) seq
+!$acc routine (beta) seq
+!$acc routine (beta0) seq
+!$acc routine (rhoshock) seq
+!$acc routine (rarwave) seq
 !
 ! local variables
 !
 IMPLICIT NONE
 INTEGER, PARAMETER :: n=1
+REAL*8, DIMENSION(ngrid) :: cho
+REAL*8, DIMENSION(ngrid) :: nes
+REAL*8  :: rhobar(5),pbar(5),vxbar(5),vybar(5),vzbar(5),gbar(5),cbar(2)
+REAL*8  :: rhojl(2),pjl(2),vxjl(2),vyjl(2),vzjl(2),cjl(2),gjl(2)
+REAL*8  :: rhojr(2),pjr(2),vxjr(2),vyjr(2),vzjr(2),cjr(2),gjr(2)
+REAL*8  :: deltarho(2),deltap(2),deltavx(2),deltavy(2),deltavz(2),deltac(2),deltag(2)
+REAL*8  :: rho6(2),p6(2),vx6(2),vy6(2),vz6(2),c6(2),g6(2)
+REAL*8  :: pleft,pright,rholeft,rhoright,vxleft,vxright
+!
+REAL*8, DIMENSION(ngrid) :: pres,rho,vx,vy,ghalf
+REAL*8, DIMENSION(ngrid) :: vz,g,c,eint,etot
+REAL*8, DIMENSION(ngrid) :: rhoold1d,vxold1d,phi1,phi0
+REAL*8, DIMENSION(ngrid) :: flt,nu,sk2
 INTEGER :: i,j,k,ngrid,icell,icellaux,cellid,cellidaux,flatyn
 INTEGER :: nmax,nmin,nmid,index,ndir,nbound0
 REAL*8  :: pnew(ngrid),rhonew(ngrid),vxnew(ngrid)
@@ -32,6 +53,8 @@ REAL*8  :: vtail1,vtail2,vhead1,vhead2,rhocont1,rhocont2,vtleft
 REAL*8  :: vtright,zeta
 REAL*8  :: maxp,pmean
 REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
+!$acc data present(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+!$acc &            rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
 !
 !CLA
 dadt=1.0-0.5*dat*dt*rat
@@ -288,7 +311,7 @@ do i=nmin,nmax
 ! compute post-shock pressure and velocity (same for both the shocks):
 !
       pm(2)=max(pleft,pright)
-      call riemann(pm(2),vxm(2))
+      call riemann(pm(2),vxm(2),pleft,pright,rholeft,rhoright,vxleft,vxright)
 !
 ! compute post-shock density and velocity for left (1) and right (2) shock:
 !
@@ -330,7 +353,7 @@ do i=nmin,nmax
       pm(2)=( (cleft+cright+(vxleft-vxright)*&
                       (gamma-1)*0.5)/(cleft/pleft**m+cright/&
                        pright**m) )**rm
-              call riemann(pm(2),vxm(2))
+              call riemann(pm(2),vxm(2),pleft,pright,rholeft,rhoright,vxleft,vxright)
 !
 ! solve Riemann problem in the case pleft > pright:
 !
@@ -538,13 +561,15 @@ do i=nmin,nmax
                         vz(index)+rdtath*(flux(1)-flux(2))*rdx)&
                         /rhonew(index)
 ! Etot >
-   flux(1)=(gamma*pm(1)*rgamma1+0.50*rhom(1)*vxm(1)*vxm(1))*vxm(1)
-   flux(2)=(gamma*pm(2)*rgamma1+0.50*rhom(2)*vxm(2)*vxm(2))*vxm(2)
+   flux(1)=(gamma*pm(1)*rgamma1+0.50*rhom(1)*(vxm(1)*vxm(1)+vym(1)*vym(1)+vzm(1)*vzm(1)))*vxm(1)
+   flux(2)=(gamma*pm(2)*rgamma1+0.50*rhom(2)*(vxm(2)*vxm(2)+vym(2)*vym(2)+vzm(2)*vzm(2)))*vxm(2)
    grav=(rhoold1d(index)*vxold1d(index)+&
                  rhonew(index)*vxnew(index))&
                  *ghalf(index)*0.5
    etotnew(index)=etot(index)+rdtath*(flux(1)-flux(2))*rdx+rdtath*grav
 ! Eint >
+! CLA
+! THE EXPANSION TERM SEEMS TO BE MISSING
    pmean=(pm(1)+pm(2))*0.5
    if(rhobar(2).gt.dmax*rhobar(1).and.&
       rhobar(2).gt.dmax*rhobar(3))then
@@ -622,5 +647,6 @@ enddo
 #ifndef STENCIL
 enddo   
 #endif
+!$acc end data
 !
 END SUBROUTINE ppm

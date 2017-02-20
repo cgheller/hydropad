@@ -28,6 +28,7 @@ ALLOCATE (flt(dgrid),STAT=error)
 ALLOCATE (nu(dgrid),STAT=error)
 ALLOCATE (sk2(dgrid),STAT=error)
 !
+!$acc kernels
 cho=0.0
 nes=0.0
 pres=0.0
@@ -47,5 +48,6 @@ phi0=0.0
 flt=0.0
 nu=0.0
 sk2=0.0
+!$acc end kernels
 !
 END SUBROUTINE alloc_vectors

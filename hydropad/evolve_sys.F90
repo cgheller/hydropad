@@ -22,6 +22,8 @@ REAL(KIND=8) ::  ti,tf
 INTEGER :: startdump,dump
 INTEGER :: i,j,k
 !
+nrot=mod(nstep,6)+1
+!
 ! calculate the DM density field, the gravitational potential and forces
 ! at the beginning of the step - move dark matter particles
 !
@@ -72,7 +74,6 @@ call expand
 !
 call calculate_thermo(tm1,pmax1)
 !
-nrot=mod(nstep,6)+1
 !
 ! cooling
 !

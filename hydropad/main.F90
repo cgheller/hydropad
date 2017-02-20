@@ -99,7 +99,9 @@ do while(nstep.lt.maxsteps)
 !
 ! system evolution
 !
+!$acc data copyout(rho3d,p3d,vx3d,vy3d,vz3d)
   CALL evolve_sys
+!$acc end data
 !
 #ifdef USEMPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)

@@ -27,7 +27,8 @@ t0h0=0.66666666667
 !
 tin=0.0
 told=tin
-dt=0.00001
+dt=dtinit
+!dt=0.00001
 dth=0.5*dt
 dtold=dt
 t=tin+dt
@@ -62,8 +63,10 @@ vz3d=0.0
 ! Shock tube in the x direction
 
 #ifdef SHOCKX
+!$acc data copyin(coordinates) copyout(rho3d,p3d,vx3d,vy3d,vz3d)
 startx = coordinates(1)*ngridxpe+1
 endx = (coordinates(1)+1)*ngridxpe
+!$acc parallel loop collapse(3) gang worker vector
 do k=1,nz
  do j=1,ny
   do i=nbound+1,nx-nbound
@@ -84,6 +87,8 @@ do k=1,nz
   enddo
  enddo
 enddo
+!$acc end parallel loop
+!$acc end data
 #endif
 
 #ifdef SHOCKY
@@ -159,6 +164,12 @@ do k=nbound+1,nz-nbound
       vx3d(i,j,k) = 0.0d0
       vy3d(i,j,k) = 0.0d0
       vz3d(i,j,k) = 0.0d0
+!    else if(igridx+igridy == ngridx+1)then
+!      rho3d(i,j,k) = 0.5625
+!      p3d(i,j,k) = 0.55
+!      vx3d(i,j,k) = 0.0d0
+!      vy3d(i,j,k) = 0.0d0
+!      vz3d(i,j,k) = 0.0d0
     else
       rho3d(i,j,k) = 0.125d0
       p3d(i,j,k) = 0.1d0

@@ -24,5 +24,7 @@ REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gy
 REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gz
 !
 REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gxold,gyold,gzold
+!$acc declare create(nes3d,cho3d,p3d,rho3d,vx3d,vy3d,vz3d,p3dnew,&
+!$acc &              rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3dnew)
 !
 END MODULE MATRIX

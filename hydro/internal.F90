@@ -1,16 +1,16 @@
-REAL*8 FUNCTION internal(nnn)
+REAL*8 FUNCTION internal(pres)
 !
 ! calculate internal energy density
 !
 	USE dimension
-	USE vector
 	USE scalar
+!$acc routine seq
 !
 ! local variables
 !
 	IMPLICIT NONE
-	INTEGER, INTENT(IN) :: nnn
+        REAL(KIND=8)pres
 !
-	internal=pres(nnn)*rgamma1
+	internal=pres*rgamma1
 !
 END FUNCTION internal

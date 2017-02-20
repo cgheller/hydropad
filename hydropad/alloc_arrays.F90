@@ -108,6 +108,7 @@ if(error.ne.0)then
      stop
 endif
 !
+!$acc kernels
 nes3d=0.0
 cho3d=0.0
 p3d=0.0
@@ -115,14 +116,15 @@ rho3d=0.0
 vx3d=0.0
 vy3d=0.0
 vz3d=0.0
-ttt=0.0
-pold3d=0.0
 cho3dnew=0.0
 p3dnew=0.0
 rho3dnew=0.0
 vx3dnew=0.0
 vy3dnew=0.0
 vz3dnew=0.0
+!$acc end kernels
+ttt=0.0
+pold3d=0.0
 vxold=0.0
 vyold=0.0
 vzold=0.0

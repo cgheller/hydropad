@@ -2,6 +2,7 @@ SUBROUTINE dda(a,eta,ajld,ajrd,dmalf,dmarg)
 !
 USE dimension
 USE scalar
+!$acc routine seq
 !
 IMPLICIT NONE
 INTEGER :: i,j,k

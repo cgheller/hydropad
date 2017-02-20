@@ -1,5 +1,6 @@
 REAL*8 FUNCTION rarwave(f1,f2,vt,vh)
 !
+!$acc routine seq
 	IMPLICIT NONE
 	REAL*8, INTENT(IN) :: f1,f2,vt,vh
 !
@@ -13,6 +14,7 @@ END FUNCTION rarwave
 REAL*8 FUNCTION rhoshock(p2,p1,rho1)
 !
 	USE scalar
+!$acc routine seq
 !
 	IMPLICIT NONE
 	REAL*8, INTENT(IN) :: p2,p1,rho1
@@ -24,15 +26,16 @@ END FUNCTION rhoshock
 !*********************************************************************
 !*********************************************************************
 !
-SUBROUTINE riemann(pstar,vstar)
+SUBROUTINE riemann(pstar,vstar,pleft,pright,rholeft,rhoright,vxleft,vxright)
 !
 ! This routine uses Van Leer method to solve the Riemann problem
 ! 
 	USE dimension
 	USE scalar
-	USE ppm_mod, ONLY: pleft,pright,rholeft,rhoright,vxleft,vxright
+!$acc routine seq
 !
 	IMPLICIT NONE
+	REAL(KIND=8)pleft,pright,rholeft,rhoright,vxleft,vxright
 	INTEGER :: nnewt,nnewtmax
         INTEGER :: i,j,k
 	REAL*8  :: pstar,vstar,vstarl,vstarr,vprimel,vprimer,pstarold

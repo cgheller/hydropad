@@ -4,10 +4,11 @@ SUBROUTINE ppmsolver(p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d, &
 !
 ! 1D integration  
 !
-
 USE vector
 USE scalar
-USE ppm_mod
+!$acc routine (ppm) seq
+!$acc routine (internal) seq
+!$acc routine (total) seq
 !
 IMPLICIT NONE
 INTEGER :: nx, ny, nz, ndirection,nmin,nmax
@@ -41,6 +42,8 @@ CASE (1)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
 !$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$acc parallel loop collapse(3) private(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+!$acc &                         rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2,ippm) gang worker vector
         do k=nbound+1,nz-nbound
           do j=nbound+1,ny-nbound
 #ifdef STENCIL
@@ -52,13 +55,14 @@ CASE (1)
                 vx(ippm)=vx3d(iaux,j,k)
                 vy(ippm)=vy3d(iaux,j,k)
                 vz(ippm)=vz3d(iaux,j,k)
-                eint(ippm)=internal(ippm)
-                etot(ippm)=total(ippm)
+                eint(ippm)=internal(pres(ippm))
+                etot(ippm)=total(pres(ippm),rho(ippm),vx(ippm),vy(ippm),vz(ippm))
                 cho(ippm)=cho3d(iaux,j,k)
                 nes(ippm)=nes3d(iaux,j,k)
                 c(ippm)=sqrt(gamma*p3d(iaux,j,k)/rho3d(iaux,j,k))
               enddo
-              call ppm(ngrid,nbound,nmin,nmax,i)
+              call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                       rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
               p3dnew(i,j,k)=pres(4)
               rho3dnew(i,j,k)=rho(4)
               vx3dnew(i,j,k)=vx(4)
@@ -73,13 +77,14 @@ CASE (1)
               vx(i)=vx3d(i,j,k)
               vy(i)=vy3d(i,j,k)
               vz(i)=vz3d(i,j,k)
-              eint(i)=internal(i)
-              etot(i)=total(i)
+              eint(i)=internal(pres(i))
+              etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(i,j,k)
               nes(i)=nes3d(i,j,k)
               c(i)=sqrt(gamma*p3d(i,j,k)/rho3d(i,j,k))
             enddo
-            call ppm(ngrid,nbound,nmin,nmax,i)
+            call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                     rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
             do i=1,nx
               p3dnew(i,j,k)=pres(i)
               rho3dnew(i,j,k)=rho(i)
@@ -88,10 +93,10 @@ CASE (1)
               vz3dnew(i,j,k)=vz(i)
               cho3dnew(i,j,k)=cho(i)
             enddo
-
 #endif
           enddo
         enddo
+!$acc end parallel loop
 !$OMP end parallel do
         call dealloc_vectors
 ! Integration in the y direction
@@ -110,6 +115,8 @@ CASE (2)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
 !$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$acc parallel loop collapse(3) private(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+!$acc &                         rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2,ippm) gang worker vector
         do k=nbound+1,nz-nbound
           do j=nbound+1,nx-nbound
 #ifdef STENCIL
@@ -121,13 +128,14 @@ CASE (2)
                 vx(ippm)=vy3d(j,iaux,k)
                 vy(ippm)=vz3d(j,iaux,k)
                 vz(ippm)=vx3d(j,iaux,k)
-                eint(ippm)=internal(ippm)
-                etot(ippm)=total(ippm)
+                eint(ippm)=internal(pres(ippm))
+                etot(ippm)=total(pres(ippm),rho(ippm),vx(ippm),vy(ippm),vz(ippm))
                 cho(ippm)=cho3d(j,iaux,k)
                 nes(ippm)=nes3d(j,iaux,k)
                 c(ippm)=sqrt(gamma*p3d(j,iaux,k)/rho3d(j,iaux,k))
               enddo
-              call ppm(ngrid,nbound,nmin,nmax,i)
+              call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                       rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
               p3dnew(j,i,k)=pres(4)
               rho3dnew(j,i,k)=rho(4)
               vx3dnew(j,i,k)=vz(4)
@@ -142,13 +150,14 @@ CASE (2)
               vx(i)=vy3d(j,i,k)
               vy(i)=vz3d(j,i,k)
               vz(i)=vx3d(j,i,k)
-              eint(i)=internal(i)
-              etot(i)=total(i)
+              eint(i)=internal(pres(i))
+              etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(j,i,k)
               nes(i)=nes3d(j,i,k)
               c(i)=sqrt(gamma*p3d(j,i,k)/rho3d(j,i,k))
             enddo
-            call ppm(ngrid,nbound,nmin,nmax,i)
+            call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                     rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
             do i=1,ny
               p3dnew(j,i,k)=pres(i)
               rho3dnew(j,i,k)=rho(i)
@@ -161,6 +170,7 @@ CASE (2)
           enddo
         enddo
 !$OMP end parallel do
+!$acc end parallel loop
         call dealloc_vectors
 ! Integration in the z direction
 CASE (3)
@@ -179,6 +189,8 @@ CASE (3)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
 !$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$acc parallel loop collapse(3) private(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+!$acc &                         rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2,ippm) gang worker vector
         do k=nbound+1,nx-nbound
           do j=nbound+1,ny-nbound
 #ifdef STENCIL
@@ -190,13 +202,14 @@ CASE (3)
                 vx(ippm)=vz3d(k,j,iaux)
                 vy(ippm)=vy3d(k,j,iaux)
                 vz(ippm)=vx3d(k,j,iaux)
-                eint(ippm)=internal(ippm)
-                etot(ippm)=total(ippm)
+                eint(ippm)=internal(pres(ippm))
+                etot(ippm)=total(pres(ippm),rho(ippm),vx(ippm),vy(ippm),vz(ippm))
                 cho(ippm)=cho3d(k,j,iaux)
                 nes(ippm)=nes3d(k,j,iaux)
                 c(ippm)=sqrt(gamma*p3d(k,j,iaux)/rho3d(k,j,iaux))
               enddo
-              call ppm(ngrid,nbound,nmin,nmax,i)
+              call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                       rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
               p3dnew(k,j,i)=pres(4)
               rho3dnew(k,j,i)=rho(4)
               vx3dnew(k,j,i)=vz(4)
@@ -212,13 +225,14 @@ CASE (3)
               vx(i)=vz3d(k,j,i)
               vy(i)=vy3d(k,j,i)
               vz(i)=vx3d(k,j,i)
-              eint(i)=internal(i)
-              etot(i)=total(i)
+              eint(i)=internal(pres(i))
+              etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(k,j,i)
               nes(i)=nes3d(k,j,i)
               c(i)=sqrt(gamma*p3d(k,j,i)/rho3d(k,j,i))
             enddo
-            call ppm(ngrid,nbound,nmin,nmax,i)
+            call ppm(ngrid,nbound,nmin,nmax,i,cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
+                     rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
             do i=1,nz
               p3dnew(k,j,i)=pres(i)
               rho3dnew(k,j,i)=rho(i)
@@ -232,6 +246,7 @@ CASE (3)
           enddo
         enddo
 !$OMP end parallel do
+!$acc end parallel loop
         call dealloc_vectors
 END SELECT
 !

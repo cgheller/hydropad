@@ -1,6 +1,6 @@
 COMPILER = GNU
 EXEC = hydropad
-DEFINES = -DUSEMPI -DTRACE -DSHOCKXYZ
+DEFINES = -DUSEMPI -DTRACE -DSEDOV
 DEFACC = 
 RM = /bin/rm
 
@@ -30,10 +30,22 @@ ifeq ($(USEOMP),yes)
     LFLAGS += -fopenmp
   endif
   ifeq ($(COMPILER),PGI)
-    FFLAGS += -mp
-    LFLAGS += -mp
+    FFLAGS += -mp 
+    LFLAGS += -mp 
   endif
 endif
+
+ifeq ($(USEACC),yes)
+  ifeq ($(COMPILER),GNU)
+    FFLAGS += -fopenacc
+    LFLAGS += -fopenacc
+  endif
+  ifeq ($(COMPILER),PGI)
+    FFLAGS += -acc -Minfo=accel 
+    LFLAGS += -acc -Minfo=accel 
+  endif
+endif
+
 
 #If debugging mode, else comment it out
 #FFLAGS += -g

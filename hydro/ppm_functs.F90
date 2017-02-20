@@ -6,6 +6,11 @@ SUBROUTINE correction(addp,addrho,a,ajl,ajr,deltaa1,a6,ccc,vi,vip1,atl,atr,acl,a
 !
 USE dimension
 USE scalar
+!$acc routine seq
+!$acc routine (ajside) seq
+!$acc routine (dda) seq
+!$acc routine (fl) seq
+!$acc routine (fr) seq
 !
 IMPLICIT NONE
 INTEGER :: ndda
@@ -87,6 +92,7 @@ REAL*8 FUNCTION fl(ajr,deltaa1,a6,y)
 !
 USE dimension
 USE scalar
+!$acc routine seq
 !
 IMPLICIT NONE
 INTEGER :: i,j,k
@@ -105,6 +111,7 @@ REAL*8 FUNCTION fr(ajl,deltaa1,a6,y)
 !
 USE dimension
 USE scalar
+!$acc routine seq
 !
 IMPLICIT NONE
 INTEGER :: i,j,k
@@ -123,6 +130,7 @@ REAL*8 FUNCTION beta(ct,ut,uc,pt,pc,gc,sign)
 !
 USE dimension
 USE scalar
+!$acc routine seq
 !
 IMPLICIT NONE
 INTEGER :: i,j,k
@@ -142,6 +150,7 @@ REAL*8 FUNCTION beta0(ct,rhot,rhoc,pt,pc)
 !
 USE dimension
 USE scalar
+!$acc routine seq
 !
 IMPLICIT NONE
 INTEGER :: i,j,k
@@ -157,6 +166,7 @@ END FUNCTION beta0
 !
 REAL*8 FUNCTION ajside(am1,a,ap1)
 !
+!$acc routine seq
 IMPLICIT NONE
 INTEGER :: i,j,k
 REAL*8 :: am1,a,ap1,da

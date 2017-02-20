@@ -12,7 +12,7 @@ IMPLICIT NONE
 INTEGER :: i
 NAMELIST/MESH/ngridx,ngridy,ngridz,nbound
 NAMELIST/MPI/npesx,npesy,npesz
-NAMELIST/TIME/maxsteps
+NAMELIST/TIME/maxsteps,dtinit
 NAMELIST/HYDRO/flatvalue,mingradflat
 NAMELIST/IO/output_pe
 !
