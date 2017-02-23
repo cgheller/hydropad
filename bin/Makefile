@@ -1,6 +1,6 @@
-COMPILER = GNU
+COMPILER = CRAY
 EXEC = hydropad
-DEFINES = -DUSEMPI -DTRACE -DSEDOV
+DEFINES = -DUSEMPI -DTRACE -DSHOCKX -DSTENCIL
 DEFACC = 
 RM = /bin/rm
 
@@ -9,7 +9,7 @@ USEMPI = yes
 # Use host OpenMP? [yes|no]
 USEOMP = no
 # Use OpenACC? [yes|no]
-USEACC = no
+USEACC = yes
 
 #File .lst
 LST = no
@@ -18,7 +18,7 @@ LST = no
 PROFILE = no
 
 F90 = ftn
-FFLAGS = -g -O3 -c
+FFLAGS = -O3 -c
 CC = CC
 DEBUG = 
 LD = ftn
@@ -36,16 +36,26 @@ ifeq ($(USEOMP),yes)
 endif
 
 ifeq ($(USEACC),yes)
+  DEFINES += -DSTENCIL
   ifeq ($(COMPILER),GNU)
     FFLAGS += -fopenacc
     LFLAGS += -fopenacc
   endif
   ifeq ($(COMPILER),PGI)
-    FFLAGS += -acc -Minfo=accel 
-    LFLAGS += -acc -Minfo=accel 
+    FFLAGS += -acc -ta=tesla:cuda8.0 -Minfo=accel 
+    LFLAGS += -acc -ta=tesla:cuda8.0 -Minfo=accel 
+  endif
+  ifeq ($(COMPILER),CRAY)
+    FFLAGS += -hacc -hnoomp -rm 
+    LFLAGS += -hacc -hnoomp -rm 
   endif
 endif
-
+ifeq ($(USEACC),no)
+  ifeq ($(COMPILER),CRAY)
+    FFLAGS += -hnoacc -hnoomp -rm
+    LFLAGS += -hnoacc -hnoomp -rm
+  endif
+endif
 
 #If debugging mode, else comment it out
 #FFLAGS += -g

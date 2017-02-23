@@ -10,5 +10,8 @@ hydropad.*
 #others
 *.tar
 *.back
+*.cub
+*.lst
+*.ptx
 
 rt

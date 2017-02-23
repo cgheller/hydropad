@@ -1,10 +1,11 @@
 SUBROUTINE flatten5(abar,flatyn,ncell)
 
+USE scalar
 IMPLICIT NONE
 !$acc routine seq
 REAL(KIND=8) :: abar(ncell)
 INTEGER :: flatyn
-REAL(KIND=8) :: gradleft,gradright,gradmax,mingradflat
+REAL(KIND=8) :: gradleft,gradright,gradmax
 INTEGER :: i,ncell,icenter
 !
 flatyn = 0

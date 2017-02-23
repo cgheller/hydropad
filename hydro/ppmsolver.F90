@@ -98,6 +98,7 @@ CASE (1)
         enddo
 !$acc end parallel loop
 !$OMP end parallel do
+!$acc update host(p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew)
         call dealloc_vectors
 ! Integration in the y direction
 CASE (2)
@@ -171,6 +172,7 @@ CASE (2)
         enddo
 !$OMP end parallel do
 !$acc end parallel loop
+!$acc update host(p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew)
         call dealloc_vectors
 ! Integration in the z direction
 CASE (3)
@@ -183,6 +185,8 @@ CASE (3)
         nmin = 3
         nmax = 5
 #endif
+!write(*,'(e13.7)')p3dnew(50,50,1:nz)
+!write(*,*)"=============================================="
 
 !$OMP PARALLEL
         call alloc_vectors(ngrid)
@@ -217,7 +221,6 @@ CASE (3)
               vz3dnew(k,j,i)=vx(4)
               cho3dnew(k,j,i)=cho(4)
             enddo
-!STOP
 #else
             do i=1,nz
               pres(i)=p3d(k,j,i)
@@ -241,12 +244,13 @@ CASE (3)
               vz3dnew(k,j,i)=vx(i)
               cho3dnew(k,j,i)=cho(i)
             enddo
-!STOP
 #endif
           enddo
         enddo
 !$OMP end parallel do
 !$acc end parallel loop
+!$acc update host(p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew)
+!write(*,'(e13.7)')p3dnew(50,50,1:nz)
         call dealloc_vectors
 END SELECT
 !
