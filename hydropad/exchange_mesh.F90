@@ -120,4 +120,6 @@ do j=1,nbound
 enddo
 endif ! smalltiles = true
 
+!$acc update device(rho3d,vx3d,vy3d,vz3d,p3d,cho3d)
+
 END SUBROUTINE exchange_mesh

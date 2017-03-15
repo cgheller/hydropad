@@ -1,6 +1,6 @@
-COMPILER = CRAY
+COMPILER = PGI
 EXEC = hydropad
-DEFINES = -DUSEMPI -DTRACE -DSHOCKX -DSTENCIL
+DEFINES = -DUSEMPI -DTRACE -DSHOCKXYZ -DSTENCIL
 DEFACC = 
 RM = /bin/rm
 
@@ -42,8 +42,9 @@ ifeq ($(USEACC),yes)
     LFLAGS += -fopenacc
   endif
   ifeq ($(COMPILER),PGI)
-    FFLAGS += -acc -ta=tesla:cuda8.0 -Minfo=accel 
-    LFLAGS += -acc -ta=tesla:cuda8.0 -Minfo=accel 
+    DEFINES += -DPGIACC
+    FFLAGS += -Mcuda -acc -ta=tesla:cuda8.0 -Minfo=accel 
+    LFLAGS += -Mcuda -acc -ta=tesla:cuda8.0 -Minfo=accel 
   endif
   ifeq ($(COMPILER),CRAY)
     FFLAGS += -hacc -hnoomp -rm 
@@ -89,7 +90,7 @@ MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o indata_simple.o initializ
 # I/O
 IO = write_var.o write_var_mpi.o
 # Hydro
-HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o dda.o flatten.o ppm_lxlylz.o total.o flatten5.o
+HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o dda.o flatten.o ppm_lxlylz.o total.o flatten5.o riemannsolver.o order2interp.o integrate.o
 # Gravity
 GRAVITY =
 # N-body

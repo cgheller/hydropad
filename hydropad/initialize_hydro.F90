@@ -62,11 +62,11 @@ vz3d=0.0
 
 ! Shock tube in the x direction
 
+!$acc data copyin(coordinates) 
 #ifdef SHOCKX
-!$acc data copyin(coordinates) copyout(rho3d,p3d,vx3d,vy3d,vz3d)
 startx = coordinates(1)*ngridxpe+1
 endx = (coordinates(1)+1)*ngridxpe
-!$acc parallel loop collapse(3) gang worker vector
+!$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
 do k=1,nz
  do j=1,ny
   do i=nbound+1,nx-nbound
@@ -88,12 +88,12 @@ do k=1,nz
  enddo
 enddo
 !$acc end parallel loop
-!$acc end data
 #endif
 
 #ifdef SHOCKY
 startx = coordinates(2)*ngridype+1
 endx = (coordinates(2)+1)*ngridype
+!$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
 do i=1,nx
  do k=1,nz
   do j=nbound+1,ny-nbound
@@ -114,12 +114,14 @@ do i=1,nx
   enddo
  enddo
 enddo
+!$acc end parallel loop
 #endif
 
 
 #ifdef SHOCKZ
 startx = coordinates(3)*ngridzpe+1
 endx = (coordinates(3)+1)*ngridzpe
+!$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
 do i=1,nx
  do j=1,ny
   do k=nbound+1,nz-nbound
@@ -140,6 +142,7 @@ do i=1,nx
   enddo
  enddo
 enddo
+!$acc end parallel loop
 #endif
 
 #ifdef SHOCKXYZ
@@ -150,6 +153,7 @@ starty = coordinates(2)*ngridype+1
 endy = (coordinates(2)+1)*ngridype
 startz = coordinates(3)*ngridzpe+1
 endz = (coordinates(3)+1)*ngridzpe
+!$acc parallel loop collapse(3) private (igridx,igridy,igridz) gang worker vector
 do k=nbound+1,nz-nbound
  do j=nbound+1,ny-nbound
   do i=nbound+1,nx-nbound
@@ -180,18 +184,22 @@ do k=nbound+1,nz-nbound
   enddo
  enddo
 enddo
+!$acc end parallel loop
 #endif
 
 #ifdef SEDOV
+!$acc kernels
 rho3d = 1.0d0
 p3d  = 1.0d0
 vx3d = 0.0d0
 vy3d = 0.0d0
 vz3d = 0.0d0
 if(mype .EQ. 0)p3d(nbound+1,nbound+1,nbound+1) = 100000.0
+!$acc end kernels
 #endif
 
 #ifdef BOUNDARIES
+!$acc kernels
 rho3d=-1.0d0
 do k=1,nz
  do j=1,ny
@@ -205,8 +213,10 @@ do k=1,nz
   enddo
  enddo
 enddo
+!$acc end kernels
 #endif
 #ifdef BOUNDARIES2
+!$acc kernels
 rho3d=-1.0
 do k=1,nz
  do j=1,ny
@@ -222,8 +232,10 @@ do k=1,nz
   enddo
  enddo
 enddo
+!$acc end kernels
 #endif
 #ifdef BOUNDARIES3
+!$acc kernels
 rho3d=-1.0
 do k=1,nz
  do j=1,ny
@@ -241,13 +253,18 @@ do k=1,nz
   enddo
  enddo
 enddo
+!$acc end kernels
 #endif
 #ifdef BOUNDARIES4
+!$acc kernels
 rho3d = real(mype)
 p3d = 0.0
 vx3d = 0.0
 vy3d = 0.0
 vz3d = 0.0
+!$acc end kernels
 #endif
+!$acc update host(rho3d,p3d,vx3d,vy3d,vz3d)
+!$acc end data
 
 END SUBROUTINE initialize_hydro

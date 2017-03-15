@@ -55,8 +55,19 @@ REAL*8  :: maxp,pmean
 REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
 !$acc data present(cho,nes,pres,rho,vx,vy,ghalf,vz,g,c,eint,etot,&
 !$acc &            rhoold1d,vxold1d,phi1,phi0,flt,nu,sk2)
+!!$acc update device(mingradflat,flatvalue,gamma,rat,m,rgamma1,rm,rgamma,dmax,rdx,rdtath,dt,dx,dat,at,&
+!!$acc &              gamma1,gf,eta1,eta2)
+
 !
 !CLA
+rhoold1d=0.0
+vxold1d=0.0
+rhonew=0.0
+vxnew=0.0
+vynew=0.0
+vznew=0.0
+etotnew=0.0
+eintnew=0.0
 dadt=1.0-0.5*dat*dt*rat
 mmmax=0.0
 !#ifndef STENCIL
@@ -102,9 +113,6 @@ do i=nmin,nmax
    cbar(1)  = c(icell)
    cbar(2)  = c(icell+1)
    gbar = 0.0
-!CLA
-   !write(*,*)i,icell
-   !write(*,'(e13.7)')pbar
 !
 ! calculate flattening parameter
 !
@@ -118,9 +126,11 @@ do i=nmin,nmax
    if(flatyn == 1)flat=flatvalue
    CALL flatten5(vzbar,flatyn,5)
    if(flatyn == 1)flat=flatvalue
+   
+#ifdef PIPPO
+!PIPPO
+#endif
    !CALL flattening(flat,ngrid)
-   !if(flat > 0.0)write(*,*)icell,flat
-   !flat=0.15
 !
 ! compute left and right limits of the hydro functions for the
 ! i-zone

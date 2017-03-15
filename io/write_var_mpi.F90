@@ -56,7 +56,6 @@ ALLOCATE(writevar(ngridxpe,ngridype,ngridzpe))
 istart=nbound+1
 writevar = real(auxvar(istart:istart+ngridxpe-1,istart:istart+ngridype-1,istart:istart+ngridzpe-1))
 !if(mype .EQ. 2)write(*,*)writevar
-write(*,*)writevar(1,1,1)
 !
 ! IO stuff
 !

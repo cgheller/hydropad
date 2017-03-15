@@ -1,4 +1,3 @@
-!
 SUBROUTINE evolve_sys(startdump)
 !
 ! evolve the system from t^n to t^n+1
@@ -23,6 +22,7 @@ INTEGER :: startdump,dump
 INTEGER :: i,j,k
 !
 nrot=mod(nstep,6)+1
+if(nstep == 1)nrot=1
 !
 ! calculate the DM density field, the gravitational potential and forces
 ! at the beginning of the step - move dark matter particles

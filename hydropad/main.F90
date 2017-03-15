@@ -9,6 +9,9 @@ USE matrix
 USE vector
 USE scalar
 USE mpi_inc
+#ifdef PGIACC
+USE cudafor
+#endif
 !USE io_mod
 #ifdef PROFILE
 USE profile
@@ -17,7 +20,14 @@ IMPLICIT NONE
 !
 ! local variables
 !
-INTEGER :: i,j,k
+REAL(KIND=8) :: tstart,tend
+INTEGER :: i,j,k,istat
+#ifdef PGIACC
+INTEGER(kind=cuda_count_kind) :: hsize
+!
+hsize = 32*1024*1024
+!istat = cudaDeviceSetLimit(cudaLimitMallocHeapSize, hsize)
+#endif
 !
 #ifdef PROFILE
 t_cpu=0.0
@@ -42,10 +52,12 @@ if(mype == 0)write(*,*)
 CALL MPI_Init(ierr)
 CALL MPI_Comm_size(MPI_COMM_WORLD,npes,ierr)
 CALL MPI_Comm_rank(MPI_COMM_WORLD,mype,ierr)
+tstart = MPI_Wtime()
 #endif
 !
 ! Initialize the simulation
 !
+!$acc data present(rho3d,p3d,vx3d,vy3d,vz3d)
 CALL init_sys
 !
 ! THIS HAS TO BE ALL REMOVED
@@ -99,9 +111,7 @@ do while(nstep.lt.maxsteps)
 !
 ! system evolution
 !
-!$acc data copyout(rho3d,p3d,vx3d,vy3d,vz3d)
   CALL evolve_sys
-!$acc end data
 !
 #ifdef USEMPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
@@ -111,6 +121,7 @@ do while(nstep.lt.maxsteps)
 !
 enddo
 !
+!$acc end data
 
 variablefilename="rho.bin"
 call write_var_mpi(rho3d,nx,ny,nz,variablefilename,mype)
@@ -129,6 +140,8 @@ call write_var_mpi(vz3d,nx,ny,nz,variablefilename,mype)
 CALL dealloc_arrays
 
 #ifdef USEMPI
+tend = MPI_Wtime()
+write(*,*)"Total elapsed time: ",tend-tstart
 CALL MPI_FINALIZE(ierr)
 #endif
 !

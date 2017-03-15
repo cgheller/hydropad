@@ -4,7 +4,7 @@ SUBROUTINE correction(addp,addrho,a,ajl,ajr,deltaa1,a6,ccc,vi,vip1,atl,atr,acl,a
 ! variables that are used to compute the initial left and
 ! right states of the fluid for the Riemann problem.
 !
-USE dimension
+!USE dimension
 USE scalar
 !$acc routine seq
 !$acc routine (ajside) seq
@@ -90,7 +90,7 @@ END SUBROUTINE correction
 !
 REAL*8 FUNCTION fl(ajr,deltaa1,a6,y)
 !
-USE dimension
+!USE dimension
 USE scalar
 !$acc routine seq
 !
@@ -109,7 +109,7 @@ END FUNCTION fl
 !
 REAL*8 FUNCTION fr(ajl,deltaa1,a6,y)
 !
-USE dimension
+!USE dimension
 USE scalar
 !$acc routine seq
 !
@@ -128,7 +128,7 @@ END FUNCTION fr
 !
 REAL*8 FUNCTION beta(ct,ut,uc,pt,pc,gc,sign)
 !
-USE dimension
+!USE dimension
 USE scalar
 !$acc routine seq
 !
@@ -148,7 +148,7 @@ END FUNCTION beta
 !
 REAL*8 FUNCTION beta0(ct,rhot,rhoc,pt,pc)
 !
-USE dimension
+!USE dimension
 USE scalar
 !$acc routine seq
 !

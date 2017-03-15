@@ -13,6 +13,7 @@ IMPLICIT NONE
 REAL*8  :: job_size,aux1,aux2,aux3,aux4,aux5
 INTEGER :: size_of_real
 INTEGER :: error
+INTEGER :: nhydrovars
 integer :: nxr, nyr, nzr
 
 nxr = int(ngridx/npesx)
@@ -38,7 +39,12 @@ aux1=0.0
 aux2=0.0
 aux3=0.0
 
-aux1=14.0*size_of_real*real(nx*ny*nz)*real(ntilex*ntiley*ntilez)/1e6
+nhydrovars = 10
+#ifdef STENCIL
+nhydrovars = 15
+#endif
+
+aux1=nhydrovars*size_of_real*real(nx*ny*nz)*real(ntilex*ntiley*ntilez)/1e6
 if(mype.eq.0)then
   write(*,*)
   write(*,*)'Hydro Size (Mbyte/PE)...',aux1
