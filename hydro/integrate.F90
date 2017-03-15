@@ -11,7 +11,7 @@ USE scalar
 IMPLICIT NONE
 REAL(KIND=8)  :: pnew,rhonew,vxnew,vynew,vznew,etotnew,eintnew,ghalf
 REAL(KIND=8)  :: pres,rho,vx,vy,vz,etot,eint
-REAL(KIND=8)  :: vxold1d,rhoold1d
+REAL(KIND=8)  :: vxold1d
 REAL(KIND=8)  :: flux1,flux2
 REAL(KIND=8)  :: pm1,rhom1,vxm1,vym1,vzm1
 REAL(KIND=8)  :: pm2,rhom2,vxm2,vym2,vzm2
@@ -19,7 +19,6 @@ REAL(KIND=8)  :: vvv,dadt
 REAL(KIND=8)  :: mmmax,grav,pmean,ee1,ee2
 REAL(KIND=8) :: eeleft, ee, eeright, ee0, eeaux
 
-rhoold1d=0.0
 vxold1d=0.0
 rhonew=0.0
 vxnew=0.0

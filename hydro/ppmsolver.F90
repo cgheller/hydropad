@@ -210,9 +210,12 @@ CASE (2)
 !$acc update device (p3d,rho3d,vx3d,vy3d,vz3d)
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,iaux,ippm,pres,rho,vx,vy,vz,g,c) gang vector
+!        do k=nbound+1,nz-nbound
+!          do j=nbound+1,nx-nbound
+!            do i=nbound+1,ny-nbound+1
         do k=nbound+1,nz-nbound
-          do j=nbound+1,nx-nbound
-            do i=nbound+1,ny-nbound+1
+          do i=nbound+1,ny-nbound+1
+            do j=nbound+1,nx-nbound
               do ippm=1,ngrid
                 iaux=i+ippm-4
                 pres(ippm)=p3d(j,iaux,k)
@@ -235,9 +238,12 @@ CASE (2)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,pm,rhom,vxm,vym,vzm,rho,vx,ippm,iaux) gang vector
+!        do k=nbound+1,nz-nbound
+!          do j=nbound+1,nx-nbound
+!            do i=nbound+1,ny-nbound+1
         do k=nbound+1,nz-nbound
-          do j=nbound+1,nx-nbound
-            do i=nbound+1,ny-nbound+1
+          do i=nbound+1,ny-nbound+1
+            do j=nbound+1,nx-nbound
               do ippm=1,ngrid
                 iaux=i+ippm-4
                 rho(ippm)=rho3d(iaux,j,k)
@@ -260,9 +266,12 @@ CASE (2)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,etots,eints) gang vector
+!        do k=nbound+1,nz-nbound
+!          do j=nbound+1,nx-nbound
+!            do i=nbound+1,ny-nbound
         do k=nbound+1,nz-nbound
-          do j=nbound+1,nx-nbound
-            do i=nbound+1,ny-nbound
+          do i=nbound+1,ny-nbound
+            do j=nbound+1,nx-nbound
               etots = total(p3d(j,i,k),rho3d(j,i,k),vx3d(j,i,k),vy3d(j,i,k),vz3d(j,i,k))
               eints = internal(p3d(j,i,k))
               call integrate(pleft(j,i,k),pleft(j,i+1,k),rholeft(j,i,k),rholeft(j,i+1,k),&
@@ -329,9 +338,12 @@ CASE (3)
 !$acc update device (p3d,rho3d,vx3d,vy3d,vz3d)
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,iaux,ippm,pres,rho,vx,vy,vz,g,c) gang vector
-        do k=nbound+1,nx-nbound
+!        do k=nbound+1,nx-nbound
+!          do j=nbound+1,ny-nbound
+!            do i=nbound+1,nz-nbound+1
+        do i=nbound+1,nz-nbound+1
           do j=nbound+1,ny-nbound
-            do i=nbound+1,nz-nbound+1
+            do k=nbound+1,nx-nbound
               do ippm=1,ngrid
                 iaux=i+ippm-4
                 pres(ippm)=p3d(k,j,iaux)
@@ -354,9 +366,12 @@ CASE (3)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,pm,rhom,vxm,vym,vzm,rho,vx,ippm,iaux) gang vector
-        do k=nbound+1,nx-nbound
+!        do k=nbound+1,nx-nbound
+!          do j=nbound+1,ny-nbound
+!            do i=nbound+1,nz-nbound+1
+        do i=nbound+1,nz-nbound+1
           do j=nbound+1,ny-nbound
-            do i=nbound+1,nz-nbound+1
+            do k=nbound+1,nx-nbound
               do ippm=1,ngrid
                 iaux=i+ippm-4
                 rho(ippm)=rho3d(iaux,j,k)
@@ -379,9 +394,12 @@ CASE (3)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,etots,eints) gang vector
-        do k=nbound+1,nx-nbound
+!        do k=nbound+1,nx-nbound
+!          do j=nbound+1,ny-nbound
+!            do i=nbound+1,nz-nbound
+        do i=nbound+1,nz-nbound
           do j=nbound+1,ny-nbound
-            do i=nbound+1,nz-nbound
+            do k=nbound+1,nx-nbound
               etots = total(p3d(k,j,i),rho3d(k,j,i),vx3d(k,j,i),vy3d(k,j,i),vz3d(k,j,i))
               eints = internal(p3d(k,j,i))
               call integrate(pleft(k,j,i),pleft(k,j,i+1),rholeft(k,j,i),rholeft(k,j,i+1),&
