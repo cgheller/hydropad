@@ -1,4 +1,3 @@
-
 SUBROUTINE init_sys
 !
 USE dimension
@@ -11,10 +10,14 @@ IMPLICIT NONE
 !
 INTEGER :: i
 NAMELIST/MESH/ngridx,ngridy,ngridz,nbound
+NAMELIST/SETUP/chooseinit
 NAMELIST/MPI/npesx,npesy,npesz
-NAMELIST/TIME/maxsteps,dtinit
+NAMELIST/TIME/maxsteps,dtinit,tstop,startdump
 NAMELIST/HYDRO/flatvalue,mingradflat
 NAMELIST/IO/output_pe
+NAMELIST/NUMERICS/cour,ca,eta1,eta2,dmax,norm
+NAMELIST/PHYSICS/boltz,mh,gamma
+NAMELIST/COSMOLOGY/omega_dm,omega_bm,omega_lambda,hnow,boxMpc_over_h,tempnow
 !
 ! Read simulation parameters
 !
@@ -25,12 +28,16 @@ do i = 0,npes-1
  if (i .EQ. mype)then
    OPEN(UNIT=500,FILE="input.nml",STATUS="old")
    READ(500,NML=MESH)
+   READ(500,NML=SETUP)
 #ifdef USEMPI
    READ(500,NML=MPI)
 #endif
    READ(500,NML=TIME)
    READ(500,NML=HYDRO)
    READ(500,NML=IO)
+   READ(500,NML=NUMERICS)
+   READ(500,NML=PHYSICS)
+   READ(500,NML=COSMOLOGY)
 
    CLOSE(500)
  endif
@@ -38,6 +45,9 @@ do i = 0,npes-1
 CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
 #endif
 enddo
+!
+! set-up the domain decomposition
+!
 ngridxpe = ngridx/npesx
 ngridype = ngridy/npesy
 ngridzpe = ngridz/npesz
@@ -45,7 +55,7 @@ ntilex = 1
 ntiley = 1
 ntilez = 1
 !
-! set the geometry, allocate basic arrays
+! allocate persistent arrays
 !
 CALL alloc_arrays
 !
@@ -91,16 +101,23 @@ CALL MPI_TYPE_COMMIT(planexznbound, ierr)
 !
 CALL MPI_Type_vector(ny*nz, nbound, nx, MPI_DOUBLE_PRECISION, planeyznbound, ierr)
 CALL MPI_TYPE_COMMIT(planeyznbound, ierr)  
-
-
+!
+#else
+neighbour = 0
 #endif
-!!!CALL indata(startdump)
-! CLA: ALL FOLLOWING ROUTINES MUST BE REPLACED
-CALL indata_simple
+!
+! Now the real initialization stuff
+!
+CALL initialize_parameters
 CALL initialize_hydro
+#ifdef COSMO
+CALL initialize_dm
+#endif
+!
+! create ghost regions
+!
 CALL exchange_mesh
-
-
+!
 nrot=1
-
+!
 END SUBROUTINE init_sys

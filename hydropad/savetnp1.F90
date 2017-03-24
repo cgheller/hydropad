@@ -5,7 +5,6 @@ USE matrix
 !
 IMPLICIT NONE
 INTEGER :: i,j,k
-!$acc kernels
 do k=1,nz
 do j=1,nz
 do i=1,nz
@@ -18,6 +17,5 @@ do i=1,nz
 enddo
 enddo
 enddo
-!$acc end kernels
 !
 END SUBROUTINE savetnp1

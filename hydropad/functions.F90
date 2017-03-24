@@ -23,6 +23,10 @@ else
   dt = 1.0/rdtc
 endif
 t = t+dt
+if(t.gt.tstop)then
+   t=tstop
+   dt=t-told
+endif
 dth=0.5*dt
 thalf=told+dth
 rdtath=dt/ath
@@ -31,7 +35,7 @@ rdtath=dt/ath
 END SUBROUTINE timedet
 
 
-SUBROUTINE timedet_old
+SUBROUTINE timedet_cosmo
 !
 USE dimension
 USE scalar
@@ -59,7 +63,6 @@ else
    rdt=0.0
 endif
 !
-#ifdef COSMO
 if(omega_m.eq.1.0) then
   at=t**(2.0/3.0)
   dat=(2.0/3.0)*t**(-1.0/3.0)
@@ -81,48 +84,18 @@ vpart_max_pe=sqrt(vpart_max_pe)
 #else
 vpart_max=vpart_max_pe
 #endif
-#else
-dta=1e10
-vpart_max=0.0
-at=1.0
-#endif
 !
 ! calculate new timestep
 !
 velmax=max(velmax,vpart_max)
 rat=1.0/at
 rdtc=velmax/(cour*dx*at)
-dt=1.0/rdtc
-!CLA	dt=1.0/max(rdt,rdtc)
+dt=1.0/max(rdt,rdtc)
 dt=min(dt,dta)
 if(dt .ge. 10.0)dt=0.1
-!CLA reintroduce the following I/O
-#ifdef CLA
-if(nstep.gt.1)then
-  if(dt.lt.dt0)then
-     CALL outdumpbm
-     CALL outdumpdm
-!
-#ifdef USEMPI
-            CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-#endif
-!
-    if(mype.eq.0)then
-      open(unit=10,file='terror.dat')
-      write(10,*)'dt is less than...',dt0
-      write(10,*)'Simulation is dumped'
-      write(10,*)'dt = ',dt
-      write(10,*)'dt_old = ',dtold
-      close(10)
-      stop
-    endif
-  endif
-endif
-#endif
-!!!	dt=min(dt,dt0)
-if(dt.eq.dt0)write(*,*)'dt = dt0'
+dt=min(dt,dt0)
+if(dt.eq.dt0)write(*,*)'WARNING dt = dt0'
 t=t+dt
-write(*,*)"---------> ", told, t, dt
 if(t.gt.tstop)then
    t=tstop
    dt=t-told
@@ -174,7 +147,7 @@ if(mype.eq.0)then
 1101  format(7(1x,e11.5))
 endif
 !
-END SUBROUTINE timedet_old
+END SUBROUTINE timedet_cosmo
 !
 !********************************************************************
 !********************************************************************

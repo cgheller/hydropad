@@ -4,8 +4,8 @@ SUBROUTINE ppmsolver(p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d, &
 !
 ! 1D integration  
 !
-#define NUMBLOCKS 1000
-#define NUMTHREADS 64
+#define NUMBLOCKS 100
+#define NUMTHREADS 128
 USE vector
 USE scalar
 USE mpi_inc
@@ -59,7 +59,7 @@ allocate(vzleft(nx,ny,nz))
 allocate(vzright(nx,ny,nz))
 
 !$acc data present(p3d,rho3d,vx3d,vy3d,vz3d,&
-!$acc &            p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew)&
+!$acc &            p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew)&
 !$acc &            create(pleft,pright,rholeft,rhoright,vxleft,vxright,vyleft,vyright,vzleft,vzright)
 !$acc update device(mingradflat,flatvalue,gamma,rat,m,rgamma1,rm,rgamma,dmax,rdx,rdtath,dt,dx,dat,at,&
 !$acc &            gamma1,gf,eta1,eta2)
@@ -85,7 +85,7 @@ CASE (1)
         call alloc_vectors(ngrid)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
-!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew) private(i,j,k)
 
 #ifdef STENCIL
 !$acc update device (p3d,rho3d,vx3d,vy3d,vz3d)
@@ -204,7 +204,7 @@ CASE (2)
         call alloc_vectors(ngrid)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
-!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew) private(i,j,k)
 
 #ifdef STENCIL
 !$acc update device (p3d,rho3d,vx3d,vy3d,vz3d)
@@ -332,7 +332,7 @@ CASE (3)
         call alloc_vectors(ngrid)
 !$OMP END PARALLEL
 !$OMP parallel do collapse(2) default(firstprivate) shared(p3d,rho3d,vx3d,vy3d,vz3d,&
-!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew,cho3d,nes3d,cho3dnew) private(i,j,k)
+!$OMP          p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew) private(i,j,k)
 
 #ifdef STENCIL
 !$acc update device (p3d,rho3d,vx3d,vy3d,vz3d)

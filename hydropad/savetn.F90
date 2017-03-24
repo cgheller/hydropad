@@ -14,7 +14,9 @@ do i=1,nz
   vy3d(i,j,k) = vy3dnew(i,j,k)
   vz3d(i,j,k) = vz3dnew(i,j,k)
   p3d(i,j,k) = p3dnew(i,j,k)
+#ifndef STENCIL
   cho3d(i,j,k) = cho3dnew(i,j,k)
+#endif
 enddo
 enddo
 enddo

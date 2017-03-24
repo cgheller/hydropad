@@ -4,13 +4,14 @@ USE dimension
 USE matrix
 IMPLICIT NONE
 !
-DEALLOCATE (nes3d)
-DEALLOCATE (cho3d)
 DEALLOCATE (p3d)
 DEALLOCATE (rho3d)
 DEALLOCATE (vx3d)
 DEALLOCATE (vy3d)
 DEALLOCATE (vz3d)
+#ifndef STENCIL
+DEALLOCATE (nes3d)
+DEALLOCATE (cho3d)
 DEALLOCATE (cho3dnew)
 DEALLOCATE (p3dnew)
 DEALLOCATE (rho3dnew)
@@ -23,6 +24,7 @@ DEALLOCATE (vxold)
 DEALLOCATE (vyold)
 DEALLOCATE (vzold)
 DEALLOCATE (rhoold)
+#endif
 #ifdef GRAVITY
 DEALLOCATE (phi3d)
 DEALLOCATE (phiold3d)

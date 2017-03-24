@@ -97,8 +97,7 @@ npl=1
 !
 ! TIME LOOP STARTS
 !
-!!!!!!!do while(told.lt.tstop)
-do while(nstep.lt.maxsteps)
+do while(nstep.lt.maxsteps .AND. told.lt.tstop)
 !
   nstep=nstep+1
 !

@@ -1,6 +1,6 @@
 COMPILER = PGI
 EXEC = hydropad
-DEFINES = -DUSEMPI -DTRACE -DSHOCKXYZ -DSTENCIL
+DEFINES = -DUSEMPI -DSTENCIL
 DEFACC = 
 RM = /bin/rm
 
@@ -86,7 +86,7 @@ IPAPATH =
 # Modules
 MODS = mpi_inc.o dimension.o scalar.o vector.o matrix.o io_mod.o ppm_mod.o
 # Driver
-MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o indata_simple.o initialize_hydro.o alloc_arrays.o dealloc_vectors.o alloc_vectors.o savetn.o savetnp1.o expand.o calculate_thermo.o speed.o functions.o means.o exchange_mesh.o exchange_var.o shsearch.o
+MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o initialize_parameters.o initialize_hydro.o alloc_arrays.o dealloc_vectors.o alloc_vectors.o savetn.o savetnp1.o expand.o calculate_thermo.o speed.o functions.o means.o exchange_mesh.o exchange_var.o shsearch.o s11abf.o rk4.o
 # I/O
 IO = write_var.o write_var_mpi.o
 # Hydro

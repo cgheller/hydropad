@@ -21,35 +21,6 @@ INTEGER, ALLOCATABLE, DIMENSION(:) :: coordinates
 INTEGER :: igrid
 INTEGER :: igridx,igridy,igridz
 !
-t0h0=0.66666666667
-!
-! initialize time parameters
-!
-tin=0.0
-told=tin
-dt=dtinit
-!dt=0.00001
-dth=0.5*dt
-dtold=dt
-t=tin+dt
-thalf=told+dt/2.0
-at=1.0
-atnew=at
-dat=0.0
-ath=1.0
-dath=0.0
-datnew=0.0
-rat=1.0/at
-rdtath=dt/ath
-omega=1.0
-hubble=1.0
-redshiftold=0.0
-redshift=0.0
-thalf=told+dth
-!
-! initialize a shock tube problem
-!
-
 ALLOCATE(coordinates(ndims))
 #ifdef USEMPI
 CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
@@ -59,11 +30,18 @@ p3d=0.0
 vx3d=0.0
 vy3d=0.0
 vz3d=0.0
-
-! Shock tube in the x direction
-
+!
 !$acc data copyin(coordinates) 
-#ifdef SHOCKX
+!
+SELECT CASE (chooseinit)
+CASE (0)
+   write(*,*)"No initial conditions selected, stopping here..."
+   STOP
+CASE (1)
+! #SHOCKX
+!
+! Shock tube in the x direction
+!
 startx = coordinates(1)*ngridxpe+1
 endx = (coordinates(1)+1)*ngridxpe
 !$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
@@ -88,9 +66,9 @@ do k=1,nz
  enddo
 enddo
 !$acc end parallel loop
-#endif
 
-#ifdef SHOCKY
+CASE (2)
+! #ifdef SHOCKY
 startx = coordinates(2)*ngridype+1
 endx = (coordinates(2)+1)*ngridype
 !$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
@@ -115,10 +93,9 @@ do i=1,nx
  enddo
 enddo
 !$acc end parallel loop
-#endif
 
-
-#ifdef SHOCKZ
+CASE (3)
+! #ifdef SHOCKZ
 startx = coordinates(3)*ngridzpe+1
 endx = (coordinates(3)+1)*ngridzpe
 !$acc parallel loop collapse(3) private (startx,endx,igrid) gang worker vector
@@ -143,9 +120,9 @@ do i=1,nx
  enddo
 enddo
 !$acc end parallel loop
-#endif
 
-#ifdef SHOCKXYZ
+CASE (4)
+! #ifdef SHOCKXYZ
 rho3d=real(mype+10)
 startx = coordinates(1)*ngridxpe+1
 endx = (coordinates(1)+1)*ngridxpe
@@ -185,9 +162,9 @@ do k=nbound+1,nz-nbound
  enddo
 enddo
 !$acc end parallel loop
-#endif
 
-#ifdef SEDOV
+CASE (5)
+! #ifdef SEDOV
 !$acc kernels
 rho3d = 1.0d0
 p3d  = 1.0d0
@@ -196,9 +173,9 @@ vy3d = 0.0d0
 vz3d = 0.0d0
 if(mype .EQ. 0)p3d(nbound+1,nbound+1,nbound+1) = 100000.0
 !$acc end kernels
-#endif
 
-#ifdef BOUNDARIES
+CASE (100)
+! #ifdef BOUNDARIES
 !$acc kernels
 rho3d=-1.0d0
 do k=1,nz
@@ -214,8 +191,8 @@ do k=1,nz
  enddo
 enddo
 !$acc end kernels
-#endif
-#ifdef BOUNDARIES2
+CASE (101)
+! #ifdef BOUNDARIES2
 !$acc kernels
 rho3d=-1.0
 do k=1,nz
@@ -233,8 +210,8 @@ do k=1,nz
  enddo
 enddo
 !$acc end kernels
-#endif
-#ifdef BOUNDARIES3
+CASE (102)
+! #ifdef BOUNDARIES3
 !$acc kernels
 rho3d=-1.0
 do k=1,nz
@@ -254,8 +231,8 @@ do k=1,nz
  enddo
 enddo
 !$acc end kernels
-#endif
-#ifdef BOUNDARIES4
+CASE (103)
+! #ifdef BOUNDARIES4
 !$acc kernels
 rho3d = real(mype)
 p3d = 0.0
@@ -263,7 +240,11 @@ vx3d = 0.0
 vy3d = 0.0
 vz3d = 0.0
 !$acc end kernels
-#endif
+CASE DEFAULT
+   write(*,*)"No initial conditions selected, stopping here..."
+   STOP
+END SELECT
+!
 !$acc update host(rho3d,p3d,vx3d,vy3d,vz3d)
 !$acc end data
 

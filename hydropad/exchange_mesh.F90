@@ -15,15 +15,12 @@ USE mpi_inc
 INTEGER :: i,j,k,istart,itot,itag
 INTEGER, DIMENSION(NEXCHVAR) :: request
 INTEGER, DIMENSION(MPI_STATUS_SIZE,NEXCHVAR) :: statcomm
-LOGICAL :: smalltiles
 !
-smalltiles = .false.
-
-if(smalltiles .EQV. .false.)then
 !
 ! Exchange data to build ghost regions
 !
 istart=1
+#ifdef USEMPI
 itag=10
 !variablefilename="rho1.bin"
 !if(nstep .eq. 9)call write_var(rho3d,nx,ny,nz,variablefilename,mype,output_pe)
@@ -33,24 +30,18 @@ CALL exchange_var(p3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
 CALL exchange_var(vx3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
 CALL exchange_var(vy3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
 CALL exchange_var(vz3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
+#ifndef STENCIL
 CALL exchange_var(cho3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
 CALL exchange_var(nes3d,nx,ny,nz,nbound,request,NEXCHVAR,istart,itag)
+#endif
 itot=istart-1
 !
 ! complete data exchange
 !
 CALL MPI_Waitall(itot,request,statcomm,ierr)
-!variablefilename="rho2.bin"
-!if(nstep .eq. 9)call write_var(rho3d,nx,ny,nz,variablefilename,mype,output_pe)
-!call write_var_mpi(rho3d,nx,ny,nz,variablefilename,mype)
-!if(mype .eq.0)then
-!do i=1,itot
-!write(*,*)"------------------",i
-!write(*,*)statcomm(:,i)
-!enddo
-!endif
 !
 ! alternative data exchange if no MPI is used
+#else
 !
 else
 do k=1,nbound
@@ -61,16 +52,20 @@ do k=1,nbound
     vx3d(i,j,k) = vx3d(i,j,nz-2*nbound+k) 
     vy3d(i,j,k) = vy3d(i,j,nz-2*nbound+k) 
     vz3d(i,j,k) = vz3d(i,j,nz-2*nbound+k) 
+#ifndef STENCIL
     cho3d(i,j,k) = cho3d(i,j,nz-2*nbound+k) 
     nes3d(i,j,k) = nes3d(i,j,nz-2*nbound+k) 
+#endif
 
     rho3d(i,j,nz-nbound+k) = rho3d(i,j,k+nbound)
     p3d(i,j,nz-nbound+k) = p3d(i,j,k+nbound)
     vx3d(i,j,nz-nbound+k) = vx3d(i,j,k+nbound)
     vy3d(i,j,nz-nbound+k) = vy3d(i,j,k+nbound)
     vz3d(i,j,nz-nbound+k) = vz3d(i,j,k+nbound)
+#ifndef STENCIL
     cho3d(i,j,nz-nbound+k) = cho3d(i,j,k+nbound)
     nes3d(i,j,nz-nbound+k) = nes3d(i,j,k+nbound)
+#endif
   enddo
  enddo
 enddo
@@ -83,16 +78,20 @@ do i=1,nbound
     vx3d(i,j,k) = vx3d(nx-2*nbound+i,j,k)
     vy3d(i,j,k) = vy3d(nx-2*nbound+i,j,k)
     vz3d(i,j,k) = vz3d(nx-2*nbound+i,j,k)
+#ifndef STENCIL
     cho3d(i,j,k) = cho3d(nx-2*nbound+i,j,k)
     nes3d(i,j,k) = cho3d(nx-2*nbound+i,j,k)
+#endif
 
     rho3d(nx-nbound+i,j,k) = rho3d(i+nbound,j,k)
     p3d(nx-nbound+i,j,k) = p3d(i+nbound,j,k)
     vx3d(nx-nbound+i,j,k) = vx3d(i+nbound,j,k)
     vy3d(nx-nbound+i,j,k) = vy3d(i+nbound,j,k)
     vz3d(nx-nbound+i,j,k) = vz3d(i+nbound,j,k)
+#ifndef STENCIL
     cho3d(nx-nbound+i,j,k) = cho3d(i+nbound,j,k)
     nes3d(nx-nbound+i,j,k) = nes3d(i+nbound,j,k)
+#endif
   enddo
  enddo
 enddo
@@ -105,21 +104,23 @@ do j=1,nbound
     vx3d(i,j,k) = vx3d(i,ny-2*nbound+j,k)
     vy3d(i,j,k) = vy3d(i,ny-2*nbound+j,k)
     vz3d(i,j,k) = vz3d(i,ny-2*nbound+j,k)
+#ifndef STENCIL
     cho3d(i,j,k) = cho3d(i,ny-2*nbound+j,k)
     nes3d(i,j,k) = nes3d(i,ny-2*nbound+j,k)
+#endif
 
     rho3d(i,ny-nbound+j,k) = rho3d(i,j+nbound,k)
     p3d(i,ny-nbound+j,k) = p3d(i,j+nbound,k)
     vx3d(i,ny-nbound+j,k) = vx3d(i,j+nbound,k)
     vy3d(i,ny-nbound+j,k) = vy3d(i,j+nbound,k)
     vz3d(i,ny-nbound+j,k) = vz3d(i,j+nbound,k)
+#ifndef STENCIL
     cho3d(i,ny-nbound+j,k) = cho3d(i,j+nbound,k)
     nes3d(i,ny-nbound+j,k) = nes3d(i,j+nbound,k)
+#endif
   enddo
  enddo
 enddo
-endif ! smalltiles = true
-
-!$acc update device(rho3d,vx3d,vy3d,vz3d,p3d,cho3d)
+#endif 
 
 END SUBROUTINE exchange_mesh

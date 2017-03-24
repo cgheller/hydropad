@@ -52,13 +52,14 @@ if(mype.eq.0)then
   write(*,*)
 endif
 
-ALLOCATE (nes3d(nx,ny,nz),STAT=error)
-ALLOCATE (cho3d(nx,ny,nz),STAT=error)
 ALLOCATE (p3d(nx,ny,nz),STAT=error)
 ALLOCATE (rho3d(nx,ny,nz),STAT=error)
 ALLOCATE (vx3d(nx,ny,nz),STAT=error)
 ALLOCATE (vy3d(nx,ny,nz),STAT=error)
 ALLOCATE (vz3d(nx,ny,nz),STAT=error)
+#ifndef STENCIL
+ALLOCATE (nes3d(nx,ny,nz),STAT=error)
+ALLOCATE (cho3d(nx,ny,nz),STAT=error)
 ALLOCATE (cho3dnew(nx,ny,nz),STAT=error)
 ALLOCATE (p3dnew(nx,ny,nz),STAT=error)
 ALLOCATE (rho3dnew(nx,ny,nz),STAT=error)
@@ -71,6 +72,7 @@ ALLOCATE (vxold(nx,ny,nz),STAT=error)
 ALLOCATE (vyold(nx,ny,nz),STAT=error)
 ALLOCATE (vzold(nx,ny,nz),STAT=error)
 ALLOCATE (rhoold(nx,ny,nz),STAT=error)
+#endif
 !if(nuv.eq.1)ALLOCATE (sncell(nx,ny,nz),STAT=error)
 #ifdef GRAVITY
 aux3=5.0*job_size*real(nx*ny*(nz+3))/1e6
@@ -115,26 +117,28 @@ if(error.ne.0)then
 endif
 !
 !$acc kernels
-nes3d=0.0
-cho3d=0.0
 p3d=0.0
 rho3d=0.0
 vx3d=0.0
 vy3d=0.0
 vz3d=0.0
+!$acc end kernels
+#ifndef STENCIL
+nes3d=0.0
+cho3d=0.0
 cho3dnew=0.0
 p3dnew=0.0
 rho3dnew=0.0
 vx3dnew=0.0
 vy3dnew=0.0
 vz3dnew=0.0
-!$acc end kernels
 ttt=0.0
 pold3d=0.0
 vxold=0.0
 vyold=0.0
 vzold=0.0
 rhoold=0.0
+#endif
 !if(nuv.eq.1)sncell=0.0
 #ifdef GRAVITY
 phi3d=0.0
