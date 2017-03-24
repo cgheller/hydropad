@@ -4,13 +4,19 @@ ngridx = 128,
 ngridy = 128,
 ngridz = 128
 /
+&SETUP
+chooseinit = 4
+/
 &MPI
-npesx = 2,
-npesy = 2,
-npesz = 2
+npesx = 1,
+npesy = 1,
+npesz = 1
 /
 &TIME
 maxsteps = 50
+dtinit = 0.1
+tstop = 10000.0
+startdump = 0
 /
 &HYDRO
 flatvalue = 0.15
@@ -18,4 +24,25 @@ mingradflat = 0.25
 /
 &IO
 output_pe = 1
+/
+&NUMERICS
+cour = 0.5
+ca = 0.020
+eta1 = 1e-3
+eta2 = 0.1
+dmax = 2.0e10
+norm = 1.0
+/
+&PHYSICS
+boltz = 1.380658e-16
+mh = 1.6605e-24
+gamma = 1.66666667
+/
+&COSMOLOGY
+omega_dm = 0.0
+omega_bm = 1.0
+omega_lambda = 0.0
+hnow = 0.7
+boxMpc_over_h = 1.0
+tempnow = 1.0
 /
