@@ -13,7 +13,8 @@ NAMELIST/MESH/ngridx,ngridy,ngridz,nbound
 NAMELIST/SETUP/chooseinit
 NAMELIST/MPI/npesx,npesy,npesz
 NAMELIST/TIME/maxsteps,dtinit,tstop,startdump
-NAMELIST/HYDRO/flatvalue,mingradflat
+NAMELIST/PPM/flatvalue,mingradflat
+NAMELIST/NB/npart
 NAMELIST/IO/output_pe
 NAMELIST/NUMERICS/cour,ca,eta1,eta2,dmax,norm
 NAMELIST/PHYSICS/boltz,mh,gamma
@@ -33,7 +34,8 @@ do i = 0,npes-1
    READ(500,NML=MPI)
 #endif
    READ(500,NML=TIME)
-   READ(500,NML=HYDRO)
+   READ(500,NML=PPM)
+   READ(500,NML=NB)
    READ(500,NML=IO)
    READ(500,NML=NUMERICS)
    READ(500,NML=PHYSICS)
@@ -54,6 +56,8 @@ ngridzpe = ngridz/npesz
 ntilex = 1
 ntiley = 1
 ntilez = 1
+if(npart == -1) npart = ngridx*ngridy*ngridz
+npartpe = npart/(npesx*npesy*npesz)
 !
 ! allocate persistent arrays
 !
@@ -72,7 +76,10 @@ endif
 ALLOCATE(dims(ndims))
 ALLOCATE(periods(ndims))
 ALLOCATE(neighbour(2*ndims))
-ALLOCATE(coords(ndims))
+ALLOCATE(coordinates(ndims))
+ALLOCATE(boxl(ndims))
+ALLOCATE(boxsize(ndims))
+
 dims(1) = npesx
 dims(2) = npesy
 dims(3) = npesz
@@ -81,9 +88,22 @@ periods(2) = .true.
 periods(3) = .true.
 reorder = 0
 neighbour = 0
+coordinates = 0
+boxl = 0.0
+boxsize(1) = real(ngridx)/real(max(ngridx,ngridy,ngridz))
+boxsize(2) = real(ngridy)/real(max(ngridx,ngridy,ngridz))
+boxsize(3) = real(ngridz)/real(max(ngridx,ngridy,ngridz))
 
 #ifdef USEMPI
 CALL MPI_Cart_create(MPI_COMM_WORLD,ndims,dims,periods,reorder,COMM_CART,ierr)
+CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
+
+boxl(1) = real(coordinates(1)*ngridxpe)/real(ngridx)
+boxl(2) = real(coordinates(2)*ngridype)/real(ngridy)
+boxl(3) = real(coordinates(3)*ngridzpe)/real(ngridz)
+boxsize(1) = real(ngridxpe)/real(ngridx)
+boxsize(2) = real(ngridype)/real(ngridy)
+boxsize(3) = real(ngridzpe)/real(ngridz)
 
 if(mype .EQ. output_pe) write(*,*)"MPI Rank ", mype, " has the following neighbours (x:l/r, y:d/u, z:f/r):"
 do i=0,ndims-1
@@ -109,14 +129,21 @@ neighbour = 0
 ! Now the real initialization stuff
 !
 CALL initialize_parameters
+#ifdef HYDRO
 CALL initialize_hydro
-#ifdef COSMO
-CALL initialize_dm
+#endif
+#ifdef NBODY
+CALL initialize_nbody
+#endif
+#ifdef GRAVITY
+CALL initialize_gravity
 #endif
 !
 ! create ghost regions
 !
+#ifdef HYDRO
 CALL exchange_mesh
+#endif
 !
 nrot=1
 !

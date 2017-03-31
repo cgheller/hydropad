@@ -29,10 +29,17 @@ INTEGER :: nbound
 !
 INTEGER :: nx,ny,nz
 !
+! total number of particles and number of particles per pe
+!
+INTEGER :: npart,npartpe
+!
 INTEGER :: ngrid
+!
+! OLD STUFF
+!
 INTEGER :: nxnynz
 !
-INTEGER :: n1,npart
+INTEGER :: n1
 INTEGER :: n1n1,n11,n12,n121,n1pe,n11pe,nparmax
 INTEGER :: ntot,n21,ngdim2,ngdim2pe,ngr2
 INTEGER :: nxmax

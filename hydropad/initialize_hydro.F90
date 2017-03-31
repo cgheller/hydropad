@@ -17,14 +17,9 @@ IMPLICIT NONE
 !
 INTEGER :: i,j,k
 INTEGER :: startx, endx, starty, endy, startz, endz
-INTEGER, ALLOCATABLE, DIMENSION(:) :: coordinates
 INTEGER :: igrid
 INTEGER :: igridx,igridy,igridz
 !
-ALLOCATE(coordinates(ndims))
-#ifdef USEMPI
-CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
-#endif
 rho3d=0.0
 p3d=0.0
 vx3d=0.0

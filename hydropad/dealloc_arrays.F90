@@ -4,6 +4,7 @@ USE dimension
 USE matrix
 IMPLICIT NONE
 !
+#ifdef HYDRO
 DEALLOCATE (p3d)
 DEALLOCATE (rho3d)
 DEALLOCATE (vx3d)
@@ -25,21 +26,16 @@ DEALLOCATE (vyold)
 DEALLOCATE (vzold)
 DEALLOCATE (rhoold)
 #endif
+#endif
 #ifdef GRAVITY
 DEALLOCATE (phi3d)
 DEALLOCATE (phiold3d)
-DEALLOCATE (gxold)
-DEALLOCATE (gyold)
-DEALLOCATE (gzold)
+DEALLOCATE (gforce)
 #endif
 #ifdef NBODY
 DEALLOCATE (rhodm3d)
-DEALLOCATE (x1)
-DEALLOCATE (x2)
-DEALLOCATE (x3)
-DEALLOCATE (v1)
-DEALLOCATE (v2)
-DEALLOCATE (v3)
+DEALLOCATE (ppos)
+DEALLOCATE (pvel)
 #endif
 #ifdef FFT
 DEALLOCATE (grav_shap)

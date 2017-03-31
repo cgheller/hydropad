@@ -19,8 +19,8 @@ INTEGER :: i,j,k
 REAL*8, EXTERNAL :: s11abf
 REAL*8 :: derivs
 !
-amass=rdmfact*float(ntot)/float(npart)
-dx=1.0*norm
+amass=1.0
+dx=1.0/real(max(ngridx, ngridy, ngridz))
 rdx=1.0/dx
 !
 ! calculate fundamental density parameters:
@@ -42,6 +42,7 @@ else
    dmfact=1.0
 endif
 rdmfact=1.0/dmfact
+amass=rdmfact/float(npart)
 bmfact=1.0/omega_bm
 rbmfact=1.0/bmfact
 box=boxMpc_over_h/hnow
@@ -170,6 +171,7 @@ else
 endif
 !
 rat=1.0/at
+dtat=dt*rat
 rdtath=dt/ath
 omega=real(1.0/(1.0+atnew*(1.0-omega_m)/omega_m))
 hubble=at/dat
@@ -188,6 +190,7 @@ thalf=told+dt/2.0
 at=1.0
 atnew=at
 dat=0.0
+dtat=dt
 ath=1.0
 dath=0.0
 datnew=0.0

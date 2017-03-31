@@ -1,6 +1,6 @@
 COMPILER = PGI
 EXEC = hydropad
-DEFINES = -DUSEMPI -DSTENCIL
+DEFINES = -DUSEMPI -DSTENCIL -DNBODY -DGRAVITY
 DEFACC = 
 RM = /bin/rm
 
@@ -9,7 +9,7 @@ USEMPI = yes
 # Use host OpenMP? [yes|no]
 USEOMP = no
 # Use OpenACC? [yes|no]
-USEACC = yes
+USEACC = no
 
 #File .lst
 LST = no
@@ -84,17 +84,17 @@ IPAPATH =
 #############################################################################
 # Objects
 # Modules
-MODS = mpi_inc.o dimension.o scalar.o vector.o matrix.o io_mod.o ppm_mod.o
+MODS = mpi_inc.o dimension.o scalar.o vector.o matrix.o io_mod.o ppm_mod.o nbody_mod.o
 # Driver
-MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o initialize_parameters.o initialize_hydro.o alloc_arrays.o dealloc_vectors.o alloc_vectors.o savetn.o savetnp1.o expand.o calculate_thermo.o speed.o functions.o means.o exchange_mesh.o exchange_var.o shsearch.o s11abf.o rk4.o
+MAIN = main.o dealloc_arrays.o evolve_sys.o init_sys.o initialize_parameters.o initialize_hydro.o alloc_arrays.o dealloc_vectors.o alloc_vectors.o savetn.o savetnp1.o expand.o calculate_thermo.o speed.o functions.o means.o exchange_mesh.o exchange_var.o shsearch.o s11abf.o rk4.o initialize_nbody.o initialize_gravity.o
 # I/O
-IO = write_var.o write_var_mpi.o
+IO = write_var.o write_var_mpi.o write_part_mpi.o
 # Hydro
 HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o dda.o flatten.o ppm_lxlylz.o total.o flatten5.o riemannsolver.o order2interp.o integrate.o
 # Gravity
 GRAVITY =
 # N-body
-NBODY = 
+NBODY = drift.o kick.o dealloc_particles.o exchange_parts.o
 
 # All objects
 HYDROPAD = $(MAIN) $(IO) $(HYDRO) $(GRAVITY) $(NBODY)

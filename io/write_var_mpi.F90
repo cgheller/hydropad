@@ -11,7 +11,7 @@ REAL(KIND=4), ALLOCATABLE, DIMENSION(:,:,:) :: writevar
 INTEGER, ALLOCATABLE, DIMENSION(:) :: sizes
 INTEGER, ALLOCATABLE, DIMENSION(:) :: subsizes
 INTEGER, ALLOCATABLE, DIMENSION(:) :: starts
-INTEGER, ALLOCATABLE, DIMENSION(:) :: coordinates
+!INTEGER, ALLOCATABLE, DIMENSION(:) :: coordinates
 INTEGER :: mype,pe
 CHARACTER(len=30)filename
 !
@@ -25,11 +25,11 @@ INTEGER(KIND=MPI_OFFSET_KIND)displacement
 ALLOCATE(sizes(ndims))
 ALLOCATE(subsizes(ndims))
 ALLOCATE(starts(ndims))
-ALLOCATE(coordinates(ndims))
+!ALLOCATE(coordinates(ndims))
 !
 ! get task position
 !
-CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
+!CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
 ! 
 ! Define the file data layout
 !
@@ -55,7 +55,6 @@ CALL MPI_Type_commit(filetype, ierr)
 ALLOCATE(writevar(ngridxpe,ngridype,ngridzpe))
 istart=nbound+1
 writevar = real(auxvar(istart:istart+ngridxpe-1,istart:istart+ngridype-1,istart:istart+ngridzpe-1))
-!if(mype .EQ. 2)write(*,*)writevar
 !
 ! IO stuff
 !

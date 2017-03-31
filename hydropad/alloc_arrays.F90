@@ -10,7 +10,7 @@ USE heat
 USE mpi_inc
 !
 IMPLICIT NONE
-REAL*8  :: job_size,aux1,aux2,aux3,aux4,aux5
+REAL(KIND=8)  :: job_size,aux1,aux2,aux3,aux4,aux5
 INTEGER :: size_of_real
 INTEGER :: error
 INTEGER :: nhydrovars
@@ -39,6 +39,7 @@ aux1=0.0
 aux2=0.0
 aux3=0.0
 
+#ifdef HYDRO
 nhydrovars = 10
 #ifdef STENCIL
 nhydrovars = 15
@@ -73,9 +74,10 @@ ALLOCATE (vyold(nx,ny,nz),STAT=error)
 ALLOCATE (vzold(nx,ny,nz),STAT=error)
 ALLOCATE (rhoold(nx,ny,nz),STAT=error)
 #endif
+#endif
 !if(nuv.eq.1)ALLOCATE (sncell(nx,ny,nz),STAT=error)
 #ifdef GRAVITY
-aux3=5.0*job_size*real(nx*ny*(nz+3))/1e6
+aux3=5.0*size_of_real*real(nx*ny*nz)/1e6
 if(mype.eq.0)then
   write(*,*)
   write(*,*)'Grav Size (Mbyte/PE)...',aux3
@@ -84,12 +86,10 @@ if(mype.eq.0)then
 endif
 ALLOCATE (phi3d(nx,ny,nz),STAT=error)
 ALLOCATE (phiold3d(nx,ny,nz),STAT=error)
-ALLOCATE (gxold(nx,ny,0:nz+2),STAT=error)
-ALLOCATE (gyold(nx,ny,0:nz+2),STAT=error)
-ALLOCATE (gzold(nx,ny,0:nz+2),STAT=error)
+ALLOCATE (gforce(ndims,nx,ny,nz),STAT=error)
 #endif
 #ifdef NBODY
-aux2=7.0*job_size*real(nparmax)/1e6
+aux2=7.0*size_of_real*real(npartpe)/1e6
 if(mype.eq.0)then
   write(*,*)
   write(*,*)'N-Body Size (Mbyte/PE)...',aux2
@@ -97,13 +97,8 @@ if(mype.eq.0)then
   write(*,*)
 endif
 ALLOCATE (rhodm3d(nx,ny,nz),STAT=error)
-ALLOCATE (x1(nparmax),STAT=error)
-ALLOCATE (x2(nparmax),STAT=error)
-ALLOCATE (x3(nparmax),STAT=error)
-ALLOCATE (v1(nparmax),STAT=error)
-ALLOCATE (v2(nparmax),STAT=error)
-ALLOCATE (v3(nparmax),11STAT=error)
-
+ALLOCATE (ppos(3,npartpe),STAT=error)
+ALLOCATE (pvel(3,npartpe),STAT=error)
 #endif
 #ifdef FFT
 ALLOCATE (grav_shap(0:n11,0:n11,0:n11pe),STAT=error)
@@ -143,18 +138,12 @@ rhoold=0.0
 #ifdef GRAVITY
 phi3d=0.0
 phiold3d=0.0
-gxold=0.0
-gyold=0.0
-gzold=0.0
+gforce=0.0
 #endif
 #ifdef NBODY
 rhodm3d=0.0
-x1=0.0
-x2=0.0
-x3=0.0
-v1=0.0
-v2=0.0
-v3=0.0
+ppos=0.0
+pvel=0.0
 #endif
 #ifdef FFT
 grav_shap=0.0

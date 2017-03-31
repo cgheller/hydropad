@@ -122,16 +122,32 @@ enddo
 !
 !$acc end data
 
+#ifdef HYDRO
 variablefilename="rho.bin"
-call write_var_mpi(rho3d,nx,ny,nz,variablefilename,mype)
+CALL write_var_mpi(rho3d,nx,ny,nz,variablefilename,mype)
 variablefilename="pressure.bin"
-call write_var_mpi(p3d,nx,ny,nz,variablefilename,mype)
+CALL write_var_mpi(p3d,nx,ny,nz,variablefilename,mype)
 variablefilename="vx.bin"
-call write_var_mpi(vx3d,nx,ny,nz,variablefilename,mype)
+CALL write_var_mpi(vx3d,nx,ny,nz,variablefilename,mype)
 variablefilename="vy.bin"
-call write_var_mpi(vy3d,nx,ny,nz,variablefilename,mype)
+CALL write_var_mpi(vy3d,nx,ny,nz,variablefilename,mype)
 variablefilename="vz.bin"
-call write_var_mpi(vz3d,nx,ny,nz,variablefilename,mype)
+CALL write_var_mpi(vz3d,nx,ny,nz,variablefilename,mype)
+#endif
+#ifdef NBODY
+variablefilename="positions.bin"
+CALL write_part_mpi(ppos,npartpe,variablefilename,mype)
+variablefilename="velocities.bin"
+CALL write_part_mpi(pvel,npartpe,variablefilename,mype)
+#endif
+#ifdef GRAVITY
+variablefilename="gravity.bin"
+CALL write_var_mpi(phi3d,nx,ny,nz,variablefilename,mype)
+#endif
+
+do i=1,npart,10
+   write(UNIT=500,FMT="(4(e13.7,1x))")ppos(1,i),ppos(2,i),ppos(3,i),pvel(1,i)**2+pvel(2,i)**2+pvel(3,i)**2
+enddo
 
 !
 ! deallocate arrays

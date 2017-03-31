@@ -75,7 +75,8 @@ end if
 !
 ! find maximum particles velocity
 !
-vpart_max_pe=maxval(v1**2+v2**2+v3**2)
+!CLA
+!vpart_max_pe=maxval(v1**2+v2**2+v3**2)
 vpart_max_pe=sqrt(vpart_max_pe)
 #ifdef USEMPI
         CALL MPI_Allreduce(vpart_max_pe,vpart_max,&

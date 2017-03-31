@@ -7,6 +7,7 @@ USE matrix
 USE vector
 USE scalar
 USE mpi_inc
+USE nbody_mod
 #ifdef PROFILE
 USE profile
 #endif
@@ -18,6 +19,9 @@ USE tracers_mod
 !
 REAL(KIND=8) :: tm1,tm2,tm3,pmax1,pmax2,pmax3
 INTEGER :: i,j,k
+INTEGER, DIMENSION(4*npes) :: request
+INTEGER, DIMENSION(MPI_STATUS_SIZE,4*npes) :: statcomm
+INTEGER :: nmoved
 !
 nrot=mod(nstep,6)+1
 if(nstep == 1)nrot=1
@@ -31,7 +35,6 @@ if(nstep == 1)nrot=1
 ! field and of the nbody. Furthermore there is all the communication for the particles. 
 ! Must be split!!!
 !
-CALL dynamics
 #endif
 !
 ! exchange ghost regions
@@ -40,14 +43,39 @@ CALL dynamics
 !
 ! call hydro solver
 !
+#ifdef HYDRO
 #ifndef STENCIL
 CALL savetnp1
 #endif
 CALL ppm_lxlylz
+#endif
 !
 ! save t^n values of hydro variables
 !
 !CALL savetn
+!
+! Nbody
+!
+#ifdef NBODY
+#ifdef USEMPI
+CALL exchange_parts(npartpe,ppos,pvel,nmoved,request,4*npes)
+#endif
+CALL kick(npartpe,ppos,pvel,nx,ny,nx,gforce)
+#ifdef USEMPI
+CALL MPI_Waitall(2*npes,request,statcomm,ierr)
+CALL kick(nmoved,xrecv,vrecv,nx,ny,nx,gforce)
+#endif
+CALL drift(npartpe,ppos,pvel)
+#ifdef USEMPI
+CALL drift(nmoved,xrecv,vrecv)
+#endif
+! here we have to calculate the density and the gravitational field
+CALL kick(npartpe,ppos,pvel,nx,ny,nx,gforce)
+#ifdef USEMPI
+CALL kick(nmoved,xrecv,vrecv,nx,ny,nx,gforce)
+CALL dealloc_particles
+#endif
+#endif
 !
 ! expansion step
 !

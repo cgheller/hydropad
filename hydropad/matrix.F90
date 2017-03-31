@@ -14,16 +14,13 @@ REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: vxold,vyold,vzold,rhoold
 REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: phi3d,phiold3d
 REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: rhodm3d
 !
-REAL*8, DIMENSION (:), ALLOCATABLE :: x1,x2,x3
-REAL*8, DIMENSION (:), ALLOCATABLE :: v1,v2,v3
+REAL*8, DIMENSION (:,:), ALLOCATABLE :: ppos
+REAL*8, DIMENSION (:,:), ALLOCATABLE :: pvel
 !
 REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: grav_shap 
 !
-REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gx
-REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gy
-REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gz
+REAL*8, DIMENSION (:,:,:,:), ALLOCATABLE :: gforce
 !
-REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: gxold,gyold,gzold
 !$acc declare create(p3d,rho3d,vx3d,vy3d,vz3d)
 !
 END MODULE MATRIX

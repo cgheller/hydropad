@@ -15,7 +15,7 @@ INTEGER :: ifail
 INTEGER :: startdump
 INTEGER :: chooseinit
 REAL(KIND=8) :: dt,t,told,at,dat,ath,dtold,dath,dth,dtinit
-REAL(KIND=8) :: rdtath,redshift,redshiftold,tin,tstop
+REAL(KIND=8) :: rdtath,redshift,redshiftold,tin,tstop,dtat
 REAL(KIND=8) :: tstop_aux,atnew,datnew,thalf,rat,ca
 REAL(KIND=8) :: tout(9)
 REAL(KIND=8) :: xsinh
