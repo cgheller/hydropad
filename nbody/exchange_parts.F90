@@ -1,4 +1,4 @@
-SUBROUTINE exchange_parts(np,ppos,pvel,nrecv,request,nreq)
+SUBROUTINE exchange_parts(np,ppos,pvel,request,nreq)
 !
       USE dimension!, ONLY: ngridxpe, ngridype, ngridzpe, nbound
       USE scalar
@@ -14,15 +14,14 @@ INTEGER :: i1,i2,i3,iaux
 REAL(KIND=8) :: xi1,xi2,xi3
 INTEGER :: i,j,k,nreq
 INTEGER :: ip1,im1,jp1,j1,jm1,kp1,km1,i3aux,i1aux,i2aux,k1
-REAL(KIND=8), INTENT(IN), DIMENSION(3,np) :: ppos
+REAL(KIND=8), INTENT(INOUT), DIMENSION(3,np) :: ppos
 REAL(KIND=8), INTENT(IN), DIMENSION(3,np) :: pvel
 REAL(KIND=8) :: x1g,x2g,x3g
 INTEGER, DIMENSION(ndims) :: partpe
 INTEGER, DIMENSION(ndims) :: boxlaux
 INTEGER, DIMENSION(nreq) :: request
 INTEGER :: to_pe, from_pe
-INTEGER :: nsend,nrecv
-INTEGER :: partpeget,reqcount
+INTEGER :: partpeget,reqcount,partpeg
 !
 ALLOCATE(nsendpe(npes))
 ALLOCATE(nrecvpe(npes))
@@ -47,21 +46,29 @@ do j=1,np
   partpe(3) = int(ppos(3,j)*npesz)
   CALL MPI_CART_RANK(COMM_CART, partpe, partpeget, ierr)
 #endif
-  if(partpeget .ne. mype)nsendpe(partpeget) = nsendpe(partpeget)+1
+  if(partpeget .ne. mype)then
+     partpeg=partpeget+1
+     nsendpe(partpeg) = nsendpe(partpeg)+1
+  endif
 enddo
 !
 ! distribute information on particles to exchange
 !
+!write(*,*)mype,nsendpe,nrecvpe
 CALL MPI_ALLTOALL(nsendpe,1,MPI_INTEGER,nrecvpe,1,MPI_INTEGER,COMM_CART,ierr)
 !
 ! allocate arrays for exchange particles data
 !
 nsend = 0
 nrecv = 0
+!write(*,*)mype,nsendpe,nrecvpe
 do i=1,npes
   nsend = nsend+nsendpe(i)
   nrecv = nrecv+nrecvpe(i)
 enddo 
+
+
+ALLOCATE(listofparticles(nsend))
 ALLOCATE(xsend(3,nsend))
 ALLOCATE(vsend(3,nsend))
 ALLOCATE(xrecv(3,nrecv))
@@ -90,14 +97,18 @@ do j=1,np
 !
 ! fill arrays
 !
-  iaux = psend(partpeget)+indexsend(partpeget)
-  indexsend(partpeget) = indexsend(partpeget)+1
+  partpeg=partpeget+1
+  iaux = psend(partpeg)+indexsend(partpeg)
+  indexsend(partpeg) = indexsend(partpeg)+1
+  listofparticles(iaux)=j
   xsend(1,iaux)=ppos(1,j)
+  ppos(1,j)=-1
   xsend(2,iaux)=ppos(2,j)
   xsend(3,iaux)=ppos(3,j)
   vsend(1,iaux)=pvel(1,j)
   vsend(2,iaux)=pvel(2,j)
   vsend(3,iaux)=pvel(3,j)
+  !if(nsend .ne. 0 .and. nstep == 90 .and. mype == 0)write(*,'(3(e13.7,1x))')xsend(1,iaux),xsend(2,iaux),xsend(3,iaux)
 !
 enddo
 !
@@ -118,6 +129,7 @@ do i=1,npes
   reqcount=reqcount+1
   CALL MPI_IRECV(vrecv(1,precv(i)+1),3*nrecvpe(i),MPI_DOUBLE_PRECISION,&
                  from_pe,20,COMM_CART,request(reqcount),ierr)
+  reqcount=reqcount+1
 enddo
 !
 END SUBROUTINE exchange_parts

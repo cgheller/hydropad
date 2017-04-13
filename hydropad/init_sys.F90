@@ -101,9 +101,6 @@ CALL MPI_Cart_coords(COMM_CART,mype,ndims,coordinates,ierr)
 boxl(1) = real(coordinates(1)*ngridxpe)/real(ngridx)
 boxl(2) = real(coordinates(2)*ngridype)/real(ngridy)
 boxl(3) = real(coordinates(3)*ngridzpe)/real(ngridz)
-boxsize(1) = real(ngridxpe)/real(ngridx)
-boxsize(2) = real(ngridype)/real(ngridy)
-boxsize(3) = real(ngridzpe)/real(ngridz)
 
 if(mype .EQ. output_pe) write(*,*)"MPI Rank ", mype, " has the following neighbours (x:l/r, y:d/u, z:f/r):"
 do i=0,ndims-1

@@ -111,6 +111,7 @@ if(error.ne.0)then
      stop
 endif
 !
+#ifdef HYDRO
 !$acc kernels
 p3d=0.0
 rho3d=0.0
@@ -133,6 +134,7 @@ vxold=0.0
 vyold=0.0
 vzold=0.0
 rhoold=0.0
+#endif
 #endif
 !if(nuv.eq.1)sncell=0.0
 #ifdef GRAVITY

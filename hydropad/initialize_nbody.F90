@@ -16,15 +16,15 @@ INTEGER :: igrid
 INTEGER :: igridx,igridy,igridz
 !
 
-do k=1,ngridz
- do j=1,ngridy
-  do i=1,ngridx
+do k=1,ngridzpe
+ do j=1,ngridype
+  do i=1,ngridxpe
 !
-    igrid = i+ngridx*(j-1)+(ngridx*ngridy)*(k-1) + mype*npartpe
+    igrid = i+ngridxpe*(j-1)+(ngridxpe*ngridype)*(k-1) 
 !    
-    ppos(1,igrid) = ((i-1)+mype*ngridx+0.5)*dx  
-    ppos(2,igrid) = ((j-1)+mype*ngridy+0.5)*dx  
-    ppos(3,igrid) = ((k-1)+mype*ngridz+0.5)*dx  
+    ppos(1,igrid) = ((i-1)+coordinates(1)*ngridxpe+0.5)*dx  
+    ppos(2,igrid) = ((j-1)+coordinates(2)*ngridype+0.5)*dx  
+    ppos(3,igrid) = ((k-1)+coordinates(3)*ngridzpe+0.5)*dx  
     pvel(1,igrid) = 0.0
     pvel(2,igrid) = 0.0
     pvel(3,igrid) = 0.0

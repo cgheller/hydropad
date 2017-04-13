@@ -145,10 +145,12 @@ variablefilename="gravity.bin"
 CALL write_var_mpi(phi3d,nx,ny,nz,variablefilename,mype)
 #endif
 
-do i=1,npart,10
-   write(UNIT=500,FMT="(4(e13.7,1x))")ppos(1,i),ppos(2,i),ppos(3,i),pvel(1,i)**2+pvel(2,i)**2+pvel(3,i)**2
+#ifdef NBODY1
+do i=1,npartpe,10
+   write(UNIT=500+mype,FMT="(4(e13.7,1x))")ppos(1,i),ppos(2,i),ppos(3,i),pvel(1,i)**2+pvel(2,i)**2+pvel(3,i)**2
+   write(UNIT=600+mype,FMT="(6(e13.7,1x))")ppos(1,i),ppos(2,i),ppos(3,i),pvel(1,i),pvel(2,i),pvel(3,i)
 enddo
-
+#endif
 !
 ! deallocate arrays
 !
@@ -156,7 +158,7 @@ CALL dealloc_arrays
 
 #ifdef USEMPI
 tend = MPI_Wtime()
-write(*,*)"Total elapsed time: ",tend-tstart
+if(mype == 0)write(*,*)"Total elapsed time: ",tend-tstart
 CALL MPI_FINALIZE(ierr)
 #endif
 !

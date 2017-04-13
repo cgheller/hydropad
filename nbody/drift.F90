@@ -18,8 +18,9 @@ REAL(KIND=8), INTENT(INOUT), DIMENSION(3,np) :: pvel
 !                 3)  v^{n+1}     = v^{n+1/2} + h/2 * F^{n+1}
 ! STEP 2: particles drift
 !
-do j=1,npartpe
+do j=1,np
 !
+          if(ppos(1,j) == -1)CYCLE
           ppos(1,j)=ppos(1,j)+rdtath*pvel(1,j)
           ppos(2,j)=ppos(2,j)+rdtath*pvel(2,j)
           ppos(3,j)=ppos(3,j)+rdtath*pvel(3,j)

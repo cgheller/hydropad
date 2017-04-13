@@ -1,4 +1,4 @@
-COMPILER = PGI
+COMPILER = GNU
 EXEC = hydropad
 DEFINES = -DUSEMPI -DSTENCIL -DNBODY -DGRAVITY
 DEFACC = 
@@ -94,7 +94,7 @@ HYDRO = boundary.o ppm_functs.o riemann.o internal.o ppm.o ppmsolver.o interp.o 
 # Gravity
 GRAVITY =
 # N-body
-NBODY = drift.o kick.o dealloc_particles.o exchange_parts.o
+NBODY = drift.o kick.o dealloc_particles.o exchange_parts.o exchangeback_parts.o
 
 # All objects
 HYDROPAD = $(MAIN) $(IO) $(HYDRO) $(GRAVITY) $(NBODY)

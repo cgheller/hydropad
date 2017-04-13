@@ -19,9 +19,13 @@ USE tracers_mod
 !
 REAL(KIND=8) :: tm1,tm2,tm3,pmax1,pmax2,pmax3
 INTEGER :: i,j,k
-INTEGER, DIMENSION(4*npes) :: request
-INTEGER, DIMENSION(MPI_STATUS_SIZE,4*npes) :: statcomm
-INTEGER :: nmoved
+INTEGER, ALLOCATABLE, DIMENSION(:,:) :: statcomm
+INTEGER, ALLOCATABLE, DIMENSION(:) :: request
+INTEGER :: nmoved,nreq
+!
+nreq = 4*npes
+ALLOCATE(request(nreq))
+ALLOCATE(statcomm(MPI_STATUS_SIZE,nreq))
 !
 nrot=mod(nstep,6)+1
 if(nstep == 1)nrot=1
@@ -58,21 +62,23 @@ CALL ppm_lxlylz
 !
 #ifdef NBODY
 #ifdef USEMPI
-CALL exchange_parts(npartpe,ppos,pvel,nmoved,request,4*npes)
+CALL exchange_parts(npartpe,ppos,pvel,request,nreq)
+nmoved=nrecv
 #endif
-CALL kick(npartpe,ppos,pvel,nx,ny,nx,gforce)
+CALL kick(npartpe,ppos,pvel,nx,ny,nz,gforce)
 #ifdef USEMPI
-CALL MPI_Waitall(2*npes,request,statcomm,ierr)
-CALL kick(nmoved,xrecv,vrecv,nx,ny,nx,gforce)
+CALL MPI_Waitall(nreq,request,statcomm,ierr)
+CALL kick(nmoved,xrecv,vrecv,nx,ny,nz,gforce)
 #endif
 CALL drift(npartpe,ppos,pvel)
 #ifdef USEMPI
 CALL drift(nmoved,xrecv,vrecv)
 #endif
 ! here we have to calculate the density and the gravitational field
-CALL kick(npartpe,ppos,pvel,nx,ny,nx,gforce)
+CALL kick(npartpe,ppos,pvel,nx,ny,nz,gforce)
 #ifdef USEMPI
-CALL kick(nmoved,xrecv,vrecv,nx,ny,nx,gforce)
+CALL kick(nmoved,xrecv,vrecv,nx,ny,nz,gforce)
+CALL exchangeback_parts(npartpe,ppos,pvel)
 CALL dealloc_particles
 #endif
 #endif
@@ -126,5 +132,8 @@ CALL timedet
 ! print mean quantities
 !
 !!!!!!CALL means(tm1,tm2,tm3,pmax1,pmax2,pmax3)
+!
+DEALLOCATE(request)
+DEALLOCATE(statcomm)
 !
 END SUBROUTINE evolve_sys

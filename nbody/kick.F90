@@ -21,7 +21,7 @@ REAL(KIND=8) :: d1,d2,d3,d4,d5,d6,d7,d8
 REAL(KIND=8) :: dd1,dd2,dd3,de1,de2,de3
 REAL(KIND=8) :: ffx,ffy,ffz
 INTEGER, DIMENSION(ndims) :: partpe
-INTEGER, DIMENSION(ndims) :: boxlaux
+REAL(KIND=8), DIMENSION(ndims) :: boxlaux
 INTEGER :: partpeget
 !
 ! move particles using a 3 steps "KDK" method: 
@@ -34,6 +34,7 @@ do j=1,np
 !
 ! calculate the cell in which the particle lies in local box coordinates
 !
+  if(ppos(1,j) == -1)CYCLE
   partpe=0
   partpeget = 0
 #ifdef USEMPI
@@ -48,9 +49,9 @@ do j=1,np
   boxlaux(1) = real(partpe(1)*ngridxpe)/real(ngridx)
   boxlaux(2) = real(partpe(2)*ngridype)/real(ngridy)
   boxlaux(3) = real(partpe(3)*ngridzpe)/real(ngridz)
-  x1g = (ppos(1,j)-boxlaux(1))*real(ngridxpe)
-  x2g = (ppos(2,j)-boxlaux(2))*real(ngridype)
-  x3g = (ppos(3,j)-boxlaux(3))*real(ngridzpe)
+  x1g = (ppos(1,j)-boxlaux(1))*real(ngridx)
+  x2g = (ppos(2,j)-boxlaux(2))*real(ngridy)
+  x3g = (ppos(3,j)-boxlaux(3))*real(ngridz)
 !
 ! find the leading cell for CIC (left cell)
 !
@@ -73,9 +74,9 @@ do j=1,np
    dd1=x1g-xi1
    dd2=x2g-xi2
    dd3=x3g-xi3
-   if(dd1.gt.1.0.or.dd1.lt.0.0)write(*,*)'WARNING: dd1 overflow'
-   if(dd2.gt.1.0.or.dd2.lt.0.0)write(*,*)'WARNING: dd2 overflow'
-   if(dd3.gt.1.0.or.dd3.lt.0.0)write(*,*)'WARNING: dd3 overflow'
+   if(dd1.gt.1.0.or.dd1.lt.0.0)write(*,*)'WARNING: dd1 overflow'!,ppos(1,j),ppos(2,j),ppos(3,j)
+   if(dd2.gt.1.0.or.dd2.lt.0.0)write(*,*)'WARNING: dd2 overflow'!,np
+   if(dd3.gt.1.0.or.dd3.lt.0.0)write(*,*)'WARNING: dd3 overflow'!,np
    de1=1.0-dd1
    de2=1.0-dd2
    de3=1.0-dd3
@@ -121,9 +122,6 @@ do j=1,np
    pvel(1,j)=pvel(1,j)*(1.0-0.5*dat*dtat)+0.5*ffx*dtat
    pvel(2,j)=pvel(2,j)*(1.0-0.5*dat*dtat)+0.5*ffy*dtat
    pvel(3,j)=pvel(3,j)*(1.0-0.5*dat*dtat)+0.5*ffz*dtat
-!
-  else
-!   GET PARTICLES
 !
   endif
 
