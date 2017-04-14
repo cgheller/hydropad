@@ -21,6 +21,6 @@ REAL*8, DIMENSION (:,:,:), ALLOCATABLE :: grav_shap
 !
 REAL*8, DIMENSION (:,:,:,:), ALLOCATABLE :: gforce
 !
-!$acc declare create(p3d,rho3d,vx3d,vy3d,vz3d)
+!$acc declare create(p3d,rho3d,vx3d,vy3d,vz3d,gforce)
 !
 END MODULE MATRIX

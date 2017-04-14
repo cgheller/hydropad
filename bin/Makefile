@@ -1,6 +1,6 @@
-COMPILER = GNU
+COMPILER = PGI
 EXEC = hydropad
-DEFINES = -DUSEMPI -DSTENCIL -DNBODY -DGRAVITY
+DEFINES = -DUSEMPI -DSTENCIL -DNBODY -DGRAVITY -DHYDRO
 DEFACC = 
 RM = /bin/rm
 
@@ -9,7 +9,7 @@ USEMPI = yes
 # Use host OpenMP? [yes|no]
 USEOMP = no
 # Use OpenACC? [yes|no]
-USEACC = no
+USEACC = yes
 
 #File .lst
 LST = no

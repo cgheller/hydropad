@@ -169,6 +169,15 @@ vz3d = 0.0d0
 if(mype .EQ. 0)p3d(nbound+1,nbound+1,nbound+1) = 100000.0
 !$acc end kernels
 
+CASE (6)
+!$acc kernels
+rho3d = 1.0d0
+p3d = rho3d**gamma
+vx3d = 0.0d0
+vy3d = 0.0d0
+vz3d = 0.0d0
+!$acc end kernels
+
 CASE (100)
 ! #ifdef BOUNDARIES
 !$acc kernels

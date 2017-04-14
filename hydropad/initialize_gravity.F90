@@ -73,5 +73,6 @@ DEALLOCATE(gaux1)
 DEALLOCATE(gaux2)
 DEALLOCATE(gaux3)
 #endif
+!$acc update device (gforce)
 !
 END SUBROUTINE initialize_gravity

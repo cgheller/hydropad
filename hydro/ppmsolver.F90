@@ -1,5 +1,7 @@
-SUBROUTINE ppmsolver(p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d, &
+SUBROUTINE ppmsolver(p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d, gforce,&
+#ifndef STENCIL
                      p3dnew, rho3dnew, vx3dnew, vy3dnew, vz3dnew, cho3dnew, &
+#endif
                      nx, ny, nz, nbound, ndirection)
 !
 ! 1D integration  
@@ -21,8 +23,11 @@ USE cudafor
 !
 IMPLICIT NONE
 INTEGER :: nx, ny, nz, ndirection,nmin,nmax
-REAL(KIND=8), DIMENSION(nx,ny,nz), INTENT(IN) :: p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d
-REAL(KIND=8), DIMENSION(nx,ny,nz), INTENT(OUT) :: p3dnew, rho3dnew, vx3dnew, vy3dnew, vz3dnew, cho3dnew
+REAL(KIND=8), DIMENSION(3,nx,ny,nz) :: gforce 
+REAL(KIND=8), DIMENSION(nx,ny,nz) :: p3d, rho3d, vx3d, vy3d, vz3d, cho3d, nes3d
+#ifndef STENCIL
+REAL(KIND=8), DIMENSION(nx,ny,nz) :: p3dnew, rho3dnew, vx3dnew, vy3dnew, vz3dnew, cho3dnew
+#endif
 REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: pleft,pright
 REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: rholeft,rhoright
 REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: vxleft,vxright
@@ -58,8 +63,7 @@ allocate(vyright(nx,ny,nz))
 allocate(vzleft(nx,ny,nz))
 allocate(vzright(nx,ny,nz))
 
-!$acc data present(p3d,rho3d,vx3d,vy3d,vz3d,&
-!$acc &            p3dnew,rho3dnew,vx3dnew,vy3dnew,vz3dnew)&
+!$acc data present(p3d,rho3d,vx3d,vy3d,vz3d,gforce)&
 !$acc &            create(pleft,pright,rholeft,rhoright,vxleft,vxright,vyleft,vyright,vzleft,vzright)
 !$acc update device(mingradflat,flatvalue,gamma,rat,m,rgamma1,rm,rgamma,dmax,rdx,rdtath,dt,dx,dat,at,&
 !$acc &            gamma1,gf,eta1,eta2)
@@ -101,7 +105,7 @@ CASE (1)
                 vx(ippm)=vx3d(iaux,j,k)
                 vy(ippm)=vy3d(iaux,j,k)
                 vz(ippm)=vz3d(iaux,j,k)
-                g(ippm)=0.0
+                g(ippm)=-gforce(1,iaux,j,k)
                 c(ippm)=sqrt(gamma*pres(ippm)/rho(ippm))
               enddo
               call order2interp(ngrid,nmin,nmax,nbound,pres,rho,vx,vy,vz,g,c,&
@@ -111,8 +115,6 @@ CASE (1)
           enddo
         enddo
 !$acc end parallel
-!!!!$acc end parallel loop
-!!!!!$acc update device (pleft,pright,rholeft,rhoright,vxleft,vxright,vyleft,vyright,vzleft,vzright)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,pm,rhom,vxm,vym,vzm,rho,vx,ippm,iaux) gang vector
@@ -140,16 +142,17 @@ CASE (1)
 !!!!!$acc end parallel loop
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
-!$acc loop collapse(3) private(i,j,k,etots,eints) gang vector
+!$acc loop collapse(3) private(i,j,k,etots,eints,ghalf) gang vector
         do k=nbound+1,nz-nbound
           do j=nbound+1,ny-nbound
             do i=nbound+1,nx-nbound
               etots = total(p3d(i,j,k),rho3d(i,j,k),vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k))
               eints = internal(p3d(i,j,k))
+              ghalf = -gforce(1,i,j,k)
               call integrate(pleft(i,j,k),pleft(i+1,j,k),rholeft(i,j,k),rholeft(i+1,j,k),&
                              vxleft(i,j,k),vxleft(i+1,j,k),vyleft(i,j,k),vyleft(i+1,j,k),&
                              vzleft(i,j,k),vzleft(i+1,j,k),p3d(i,j,k),rho3d(i,j,k),&
-                             vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k),etots,eints)
+                             vx3d(i,j,k),vy3d(i,j,k),vz3d(i,j,k),etots,eints,ghalf)
             enddo
           enddo
         enddo
@@ -165,6 +168,7 @@ CASE (1)
               vx(i)=vx3d(i,j,k)
               vy(i)=vy3d(i,j,k)
               vz(i)=vz3d(i,j,k)
+              g(i)=-gforce(1,i,j,k)
               eint(i)=internal(pres(i))
               etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(i,j,k)
@@ -223,7 +227,7 @@ CASE (2)
                 vx(ippm)=vy3d(j,iaux,k)
                 vy(ippm)=vx3d(j,iaux,k)
                 vz(ippm)=vz3d(j,iaux,k)
-                g(ippm)=0.0
+                g(ippm)=-gforce(2,j,iaux,k)
                 c(ippm)=sqrt(gamma*pres(ippm)/rho(ippm))
               enddo
               call order2interp(ngrid,nmin,nmax,nbound,pres,rho,vx,vy,vz,g,c,&
@@ -233,8 +237,6 @@ CASE (2)
           enddo
         enddo
 !$acc end parallel
-!!!!!$acc end parallel loop
-!!!!!!!$acc update host(pleft,pright,rholeft,rhoright,vxleft,vxright,vyleft,vyright,vzleft,vzright)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,pm,rhom,vxm,vym,vzm,rho,vx,ippm,iaux) gang vector
@@ -265,7 +267,7 @@ CASE (2)
 !!!!!$acc end parallel loop
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
-!$acc loop collapse(3) private(i,j,k,etots,eints) gang vector
+!$acc loop collapse(3) private(i,j,k,etots,eints,ghalf) gang vector
 !        do k=nbound+1,nz-nbound
 !          do j=nbound+1,nx-nbound
 !            do i=nbound+1,ny-nbound
@@ -274,10 +276,11 @@ CASE (2)
             do j=nbound+1,nx-nbound
               etots = total(p3d(j,i,k),rho3d(j,i,k),vx3d(j,i,k),vy3d(j,i,k),vz3d(j,i,k))
               eints = internal(p3d(j,i,k))
+              ghalf = -gforce(2,j,i,k)
               call integrate(pleft(j,i,k),pleft(j,i+1,k),rholeft(j,i,k),rholeft(j,i+1,k),&
                              vxleft(j,i,k),vxleft(j,i+1,k),vyleft(j,i,k),vyleft(j,i+1,k),&
                              vzleft(j,i,k),vzleft(j,i+1,k),p3d(j,i,k),rho3d(j,i,k),&
-                             vy3d(j,i,k),vx3d(j,i,k),vz3d(j,i,k),etots,eints)
+                             vy3d(j,i,k),vx3d(j,i,k),vz3d(j,i,k),etots,eints,ghalf)
             enddo
           enddo
         enddo
@@ -293,6 +296,7 @@ CASE (2)
               vx(i)=vy3d(j,i,k)
               vy(i)=vx3d(j,i,k)
               vz(i)=vz3d(j,i,k)
+              g(i)=-gforce(2,i,j,k)
               eint(i)=internal(pres(i))
               etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(j,i,k)
@@ -351,7 +355,7 @@ CASE (3)
                 vx(ippm)=vz3d(k,j,iaux)
                 vy(ippm)=vy3d(k,j,iaux)
                 vz(ippm)=vx3d(k,j,iaux)
-                g(ippm)=0.0
+                g(ippm)=-gforce(3,k,j,iaux)
                 c(ippm)=sqrt(gamma*pres(ippm)/rho(ippm))
               enddo
               call order2interp(ngrid,nmin,nmax,nbound,pres,rho,vx,vy,vz,g,c,&
@@ -361,8 +365,6 @@ CASE (3)
           enddo
         enddo
 !$acc end parallel
-!!!!!!$acc end parallel loop
-!!!!!$acc update host(pleft,pright,rholeft,rhoright,vxleft,vxright,vyleft,vyright,vzleft,vzright)
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
 !$acc loop collapse(3) private(i,j,k,pm,rhom,vxm,vym,vzm,rho,vx,ippm,iaux) gang vector
@@ -393,7 +395,7 @@ CASE (3)
 !!!!!$acc end parallel loop
 !
 !$acc parallel !num_gangs(NUMBLOCKS) vector_length(NUMTHREADS)
-!$acc loop collapse(3) private(i,j,k,etots,eints) gang vector
+!$acc loop collapse(3) private(i,j,k,etots,eints,ghalf) gang vector
 !        do k=nbound+1,nx-nbound
 !          do j=nbound+1,ny-nbound
 !            do i=nbound+1,nz-nbound
@@ -402,10 +404,11 @@ CASE (3)
             do k=nbound+1,nx-nbound
               etots = total(p3d(k,j,i),rho3d(k,j,i),vx3d(k,j,i),vy3d(k,j,i),vz3d(k,j,i))
               eints = internal(p3d(k,j,i))
+              ghalf = -gforce(3,k,j,i)
               call integrate(pleft(k,j,i),pleft(k,j,i+1),rholeft(k,j,i),rholeft(k,j,i+1),&
                              vxleft(k,j,i),vxleft(k,j,i+1),vyleft(k,j,i),vyleft(k,j,i+1),&
                              vzleft(k,j,i),vzleft(k,j,i+1),p3d(k,j,i),rho3d(k,j,i),&
-                             vz3d(k,j,i),vy3d(k,j,i),vx3d(k,j,i),etots,eints)
+                             vz3d(k,j,i),vy3d(k,j,i),vx3d(k,j,i),etots,eints,ghalf)
             enddo
           enddo
         enddo
@@ -421,6 +424,7 @@ CASE (3)
               vx(i)=vz3d(k,j,i)
               vy(i)=vy3d(k,j,i)
               vz(i)=vx3d(k,j,i)
+              g(i)=-gforce(3,i,j,k)
               eint(i)=internal(pres(i))
               etot(i)=total(pres(i),rho(i),vx(i),vy(i),vz(i))
               cho(i)=cho3d(k,j,i)

@@ -57,7 +57,7 @@ tstart = MPI_Wtime()
 !
 ! Initialize the simulation
 !
-!$acc data present(rho3d,p3d,vx3d,vy3d,vz3d)
+!$acc data present(rho3d,p3d,vx3d,vy3d,vz3d,gforce)
 CALL init_sys
 !
 ! THIS HAS TO BE ALL REMOVED

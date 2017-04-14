@@ -1,5 +1,5 @@
 SUBROUTINE integrate(pm1,pm2,rhom1,rhom2,vxm1,vxm2,vym1,vym2,vzm1,vzm2,&
-                     pres,rho,vx,vy,vz,etot,eint)
+                     pres,rho,vx,vy,vz,etot,eint,ghalf)
 !
 !USE dimension
 !USE vector
@@ -28,7 +28,6 @@ etotnew=0.0
 eintnew=0.0
 dadt=1.0-0.5*dat*dt*rat
 mmmax=0.0
-ghalf=0.0
 !
 ! solve the hydro equations for rho, vx, vy, vz, p (note that
 ! for the variable flux 1=i-(1/2), 2=i+(1/2)):
